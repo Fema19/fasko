@@ -14,7 +14,7 @@ class MessageController extends Controller
     {
         $messages = Message::latest()->paginate(10);
 
-        return view('messages.index', compact('messages'));
+        return $this->view('messages.index', compact('messages'));
     }
 
     /**
@@ -22,7 +22,7 @@ class MessageController extends Controller
      */
     public function create()
     {
-        return view('messages.create');
+        return $this->view('messages.create');
     }
 
     /**
@@ -31,8 +31,8 @@ class MessageController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'    => 'required|string|max:255',
-            'email'   => 'required|email',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email',
             'subject' => 'required|string|max:255',
             'content' => 'required|string',
         ]);
@@ -40,7 +40,7 @@ class MessageController extends Controller
         Message::create($request->all());
 
         return redirect()->route('messages.index')
-                         ->with('success', 'Pesan berhasil dikirim.');
+            ->with('success', 'Pesan berhasil dikirim.');
     }
 
     /**
@@ -48,7 +48,7 @@ class MessageController extends Controller
      */
     public function show(Message $message)
     {
-        return view('messages.show', compact('message'));
+        return $this->view('messages.show', compact('message'));
     }
 
     /**
@@ -56,7 +56,7 @@ class MessageController extends Controller
      */
     public function edit(Message $message)
     {
-        return view('messages.edit', compact('message'));
+        return $this->view('messages.edit', compact('message'));
     }
 
     /**
@@ -65,8 +65,8 @@ class MessageController extends Controller
     public function update(Request $request, Message $message)
     {
         $request->validate([
-            'name'    => 'required|string|max:255',
-            'email'   => 'required|email',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email',
             'subject' => 'required|string|max:255',
             'content' => 'required|string',
         ]);
@@ -74,7 +74,7 @@ class MessageController extends Controller
         $message->update($request->all());
 
         return redirect()->route('messages.index')
-                         ->with('success', 'Pesan berhasil diperbarui.');
+            ->with('success', 'Pesan berhasil diperbarui.');
     }
 
     /**
@@ -85,6 +85,6 @@ class MessageController extends Controller
         $message->delete();
 
         return redirect()->route('messages.index')
-                         ->with('success', 'Pesan berhasil dihapus.');
+            ->with('success', 'Pesan berhasil dihapus.');
     }
 }

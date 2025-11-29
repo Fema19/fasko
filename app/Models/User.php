@@ -18,6 +18,11 @@ class User extends Authenticatable
         return $this->hasMany(Booking::class);
     }
 
+    public function rooms()
+    {
+        return $this->hasMany(Room::class);
+    }
+
     public function approvedBookings()
     {
         return $this->hasMany(Booking::class, 'approved_by');

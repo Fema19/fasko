@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\RepairReport;
 use App\Models\Facility;
+use App\Models\RepairReport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -12,13 +12,15 @@ class RepairReportController extends Controller
     public function index()
     {
         $reports = RepairReport::with(['facility', 'user'])->latest()->get();
-        return view('repair_reports.index', compact('reports'));
+
+        return $this->view('repair_reports.index', compact('reports'));
     }
 
     public function create()
     {
         $facilities = Facility::all();
-        return view('repair_reports.create', compact('facilities'));
+
+        return $this->view('repair_reports.create', compact('facilities'));
     }
 
     public function store(Request $request)

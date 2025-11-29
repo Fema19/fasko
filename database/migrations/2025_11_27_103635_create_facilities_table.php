@@ -9,29 +9,31 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-  public function up()
-{
-    Schema::create('facilities', function (Blueprint $table) {
-        $table->id();
+    public function up()
+    {
+        Schema::create('facilities', function (Blueprint $table) {
+            $table->id();
 
-        $table->foreignId('category_id')->constrained()->cascadeOnDelete();
-        $table->string('name');
-        $table->string('location')->nullable();
-        $table->enum('condition', ['baik', 'rusak', 'perawatan', 'hilang'])->default('baik');
-        $table->text('description')->nullable();
-        $table->string('photo')->nullable();
+            $table->foreignId('category_id')->constrained()->cascadeOnDelete();
 
-        // Tambahan agar satu fasilitas bisa dipakai banyak kelas
-        $table->integer('capacity')->default(1);
+            // Tambahan penting untuk inventaris ruangan
+            $table->foreignId('room_id')->nullable()->constrained()->nullOnDelete();
 
-        $table->timestamps();
-    });
-}
+            $table->string('name');
+            $table->string('location')->nullable();
+            $table->enum('condition', ['baik', 'rusak', 'perawatan', 'hilang'])->default('baik');
+            $table->text('description')->nullable();
+            $table->string('photo')->nullable();
 
-public function down()
-{
-    Schema::dropIfExists('facilities');
-}
+            // kapasitas (fasilitas yang bisa digunakan lebih dari 1 kelas)
+            $table->integer('capacity')->default(1);
 
+            $table->timestamps();
+        });
+    }
 
+    public function down()
+    {
+        Schema::dropIfExists('facilities');
+    }
 };
