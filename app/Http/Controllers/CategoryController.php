@@ -10,7 +10,6 @@ class CategoryController extends Controller
     public function index()
     {
         $categories = Category::latest()->get();
-
         return $this->view('categories.index', compact('categories'));
     }
 
@@ -27,7 +26,9 @@ class CategoryController extends Controller
 
         Category::create($request->only('name'));
 
-        return redirect()->route('categories.index')->with('success', 'Kategori berhasil ditambahkan');
+        return redirect()
+            ->route('admin.categories.index')   // ✔ route benar
+            ->with('success', 'Kategori berhasil ditambahkan');
     }
 
     public function edit(Category $category)
@@ -43,13 +44,17 @@ class CategoryController extends Controller
 
         $category->update($request->only('name'));
 
-        return redirect()->route('categories.index')->with('success', 'Kategori berhasil diperbarui');
+        return redirect()
+            ->route('admin.categories.index')  // ✔ disesuaikan
+            ->with('success', 'Kategori berhasil diperbarui');
     }
 
     public function destroy(Category $category)
     {
         $category->delete();
 
-        return back()->with('success', 'Kategori berhasil dihapus');
+        return redirect()
+            ->route('admin.categories.index')  // ✔ back diganti agar konsisten
+            ->with('success', 'Kategori berhasil dihapus');
     }
 }

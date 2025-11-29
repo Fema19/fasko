@@ -1,49 +1,99 @@
-@extends('layouts.app')
-
+@extends('layouts.admin')
+@section('page_title','Daftar Fasilitas')
 @section('content')
-<div class="max-w-7xl">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">Daftar Fasilitas</h1>
-        <a href="{{ route('admin.facilities.create') }}" class="px-3 py-2 bg-green-600 text-white rounded">Tambah Fasilitas</a>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800">Fasilitas Sekolah</h1>
+        <p class="text-gray-500 text-sm">Kelola semua data fasilitas dengan mudah</p>
     </div>
 
-    <div class="bg-white rounded shadow overflow-x-auto">
+    <a href="{{ route('admin.facilities.create') }}" 
+       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow text-sm font-semibold transition">
+       + Tambah Fasilitas
+    </a>
+</div>
+
+<div class="bg-white shadow rounded-lg overflow-hidden border border-gray-200">
+    
+    <div class="overflow-x-auto">
         <table class="w-full text-sm">
-            <thead class="bg-gray-50">
+            <thead class="bg-gray-100 text-gray-700 border-b">
                 <tr>
-                    <th class="px-4 py-2">#</th>
-                    <th class="px-4 py-2">Nama</th>
-                    <th class="px-4 py-2">Kategori</th>
-                    <th class="px-4 py-2">Ruangan</th>
-                    <th class="px-4 py-2">Kondisi</th>
-                    <th class="px-4 py-2">Aksi</th>
+                    <th class="px-5 py-3 text-left">#</th>
+                    <th class="px-5 py-3 text-left">Nama Fasilitas</th>
+                    <th class="px-5 py-3 text-left">Kategori</th>
+                    <th class="px-5 py-3 text-left">Ruangan</th>
+                    <th class="px-5 py-3 text-left">Kondisi</th>
+                    <th class="px-5 py-3 text-center">Aksi</th>
                 </tr>
             </thead>
+
             <tbody class="divide-y">
-                @forelse($facilities as $f)
-                    <tr>
-                        <td class="px-4 py-2">{{ $loop->iteration }}</td>
-                        <td class="px-4 py-2">{{ $f->name }}</td>
-                        <td class="px-4 py-2">{{ $f->category->name ?? '-' }}</td>
-                        <td class="px-4 py-2">{{ $f->room->name ?? '-' }}</td>
-                        <td class="px-4 py-2">{{ $f->condition }}</td>
-                        <td class="px-4 py-2">
-                            <a href="{{ route('admin.facilities.show', $f) }}" class="text-blue-600 mr-2">Lihat</a>
-                            <a href="{{ route('admin.facilities.edit', $f) }}" class="text-yellow-600 mr-2">Edit</a>
-                            <form action="{{ route('admin.facilities.destroy', $f) }}" method="POST" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button onclick="return confirm('Yakin?')" class="text-red-600">Hapus</button>
+            @forelse($facilities as $f)
+
+                @php
+                    $badge = match($f->condition) {
+                        'baik'  => 'bg-green-200 text-green-800',
+                        'rusak' => 'bg-red-200 text-red-800',
+                        default => 'bg-yellow-200 text-yellow-800'
+                    };
+                @endphp
+
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-5 py-3">{{ $loop->iteration }}</td>
+
+                    <td class="px-5 py-3 font-medium text-gray-800">
+                        {{ $f->name }}
+                    </td>
+
+                    <td class="px-5 py-3 text-gray-700">
+                        {{ $f->category->name ?? '-' }}
+                    </td>
+
+                    <td class="px-5 py-3 text-gray-700">
+                        {{ $f->room->name ?? '-' }}
+                    </td>
+
+                    <td class="px-5 py-3">
+                        <span class="px-2 py-1 text-xs rounded font-bold {{ $badge }}">
+                            {{ strtoupper($f->condition) }}
+                        </span>
+                    </td>
+
+                    <td class="px-5 py-3">
+
+                        <div class="flex items-center justify-center gap-2">
+
+                            <a href="{{ route('admin.facilities.show', $f) }}" 
+                               class="text-blue-600 hover:underline">Detail</a>
+
+                            <a href="{{ route('admin.facilities.edit', $f) }}" 
+                               class="text-yellow-600 hover:underline">Edit</a>
+
+                            <form action="{{ route('admin.facilities.destroy', $f) }}" 
+                                  method="POST" onsubmit="return confirm('Yakin ingin menghapus fasilitas ini?')">
+                                @csrf @method('DELETE')
+                                <button class="text-red-600 hover:underline">
+                                    Hapus
+                                </button>
                             </form>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="6" class="px-4 py-4 text-center text-gray-600">Belum ada fasilitas</td>
-                    </tr>
-                @endforelse
+
+                        </div>
+
+                    </td>
+                </tr>
+
+            @empty
+                <tr>
+                    <td colspan="6" class="py-6 text-center text-gray-500">
+                        Tidak ada fasilitas ditemukan.
+                    </td>
+                </tr>
+            @endforelse
             </tbody>
         </table>
     </div>
 </div>
+
 @endsection

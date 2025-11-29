@@ -10,13 +10,20 @@ use Illuminate\Http\Request;
 class FacilityController extends Controller
 {
     // ==========================
-    // INDEX (SHOW ALL)
+    // INDEX
     // ==========================
     public function index()
     {
         $facilities = Facility::with(['category', 'room'])->latest()->get();
+        return view('admin.facilities.index', compact('facilities'));
+    }
 
-        return $this->view('facilities.index', compact('facilities'));
+    // ==========================
+    // SHOW (penting untuk detail)
+    // ==========================
+    public function show(Facility $facility)
+    {
+        return view('admin.facilities.show', compact('facility'));
     }
 
     // ==========================
@@ -26,8 +33,7 @@ class FacilityController extends Controller
     {
         $categories = Category::all();
         $rooms = Room::all();
-
-        return $this->view('facilities.create', compact('categories', 'rooms'));
+        return view('admin.facilities.create', compact('categories', 'rooms'));
     }
 
     // ==========================
@@ -37,12 +43,11 @@ class FacilityController extends Controller
     {
         $request->validate([
             'category_id' => 'required|exists:categories,id',
-            'room_id' => 'required|exists:rooms,id',
-            'name' => 'required|string|max:100',
-            'location' => 'nullable|string|max:255',
-            'condition' => 'required|in:baik,rusak,perawatan,hilang',
+            'room_id'     => 'required|exists:rooms,id',
+            'name'        => 'required|max:100',
+            'condition'   => 'required|in:baik,rusak,perawatan,hilang',
             'description' => 'nullable|string',
-            'photo' => 'nullable|image|max:2048',
+            'photo'       => 'nullable|image|max:2048',
         ]);
 
         $data = $request->all();
@@ -53,7 +58,8 @@ class FacilityController extends Controller
 
         Facility::create($data);
 
-        return redirect()->route('facilities.index')->with('success', 'Fasilitas berhasil ditambahkan');
+        return redirect()->route('admin.facilities.index')
+            ->with('success', 'Fasilitas berhasil ditambahkan');
     }
 
     // ==========================
@@ -62,9 +68,9 @@ class FacilityController extends Controller
     public function edit(Facility $facility)
     {
         $categories = Category::all();
-        $rooms = Room::all();
+        $rooms      = Room::all();
 
-        return $this->view('facilities.edit', compact('facility', 'categories', 'rooms'));
+        return view('admin.facilities.edit', compact('facility', 'categories', 'rooms'));
     }
 
     // ==========================
@@ -74,12 +80,11 @@ class FacilityController extends Controller
     {
         $request->validate([
             'category_id' => 'required|exists:categories,id',
-            'room_id' => 'required|exists:rooms,id',
-            'name' => 'required|string|max:100',
-            'location' => 'nullable|string|max:255',
-            'condition' => 'required|in:baik,rusak,perawatan,hilang',
+            'room_id'     => 'required|exists:rooms,id',
+            'name'        => 'required|max:100',
+            'condition'   => 'required|in:baik,rusak,perawatan,hilang',
             'description' => 'nullable|string',
-            'photo' => 'nullable|image|max:2048',
+            'photo'       => 'nullable|image|max:2048',
         ]);
 
         $data = $request->all();
@@ -90,7 +95,8 @@ class FacilityController extends Controller
 
         $facility->update($data);
 
-        return redirect()->route('facilities.index')->with('success', 'Fasilitas berhasil diperbarui');
+        return redirect()->route('admin.facilities.index')
+            ->with('success', 'Fasilitas berhasil diperbarui');
     }
 
     // ==========================
@@ -100,6 +106,7 @@ class FacilityController extends Controller
     {
         $facility->delete();
 
-        return back()->with('success', 'Fasilitas berhasil dihapus');
+        return redirect()->route('admin.facilities.index')
+            ->with('success', 'Fasilitas berhasil dihapus');
     }
 }

@@ -8,80 +8,96 @@ use Illuminate\Http\Request;
 
 class RoomController extends Controller
 {
-    // List semua ruangan
+    // ============================
+    // INDEX
+    // ============================
     public function index()
     {
         $rooms = Room::with('facilities')->get();
-
-        return $this->view('rooms.index', compact('rooms'));
+        return view('admin.rooms.index', compact('rooms'));
     }
 
-    // Detail ruangan + fasilitas di ruangan itu
-    public function show($id)
+    // ============================
+    // SHOW DETAIL
+    // ============================
+    public function show(Room $room)
     {
-        $room = Room::with('facilities')->findOrFail($id);
-
-        return $this->view('rooms.show', compact('room'));
+        $room->load('facilities');
+        return view('admin.rooms.show', compact('room'));
     }
 
-    // Tambah ruangan baru
+    // ============================
+    // CREATE
+    // ============================
+    public function create()
+    {
+        return view('admin.rooms.create');
+    }
+
+    // ============================
+    // STORE
+    // ============================
     public function store(Request $request)
     {
         $request->validate(['name' => 'required']);
-        Room::create($request->only('name'));
+        Room::create($request->only('name', 'code'));
 
-        return back()->with('success', 'Room created.');
+        return redirect()
+            ->route('admin.rooms.index')
+            ->with('success', 'Ruangan berhasil ditambahkan!');
     }
 
-    // Update ruangan
-    public function update(Request $request, $id)
+    // ============================
+    // EDIT
+    // ============================
+    public function edit(Room $room)
     {
-        $room = Room::findOrFail($id);
+        return view('admin.rooms.edit', compact('room'));
+    }
 
+    // ============================
+    // UPDATE
+    // ============================
+    public function update(Request $request, Room $room)
+    {
         $request->validate(['name' => 'required']);
-        $room->update($request->only('name'));
+        $room->update($request->only('name', 'code'));
 
-        return back()->with('success', 'Room updated.');
+        return redirect()
+            ->route('admin.rooms.index')
+            ->with('success', 'Ruangan berhasil diperbarui!');
     }
 
-    // Hapus ruangan + semua fasilitas di dalamnya
-    public function destroy($id)
+    // ============================
+    // DELETE RUANGAN + FASILITAS
+    // ============================
+    public function destroy(Room $room)
     {
-        $room = Room::findOrFail($id);
-        $room->facilities()->delete(); // hapus fasilitasnya juga
+        $room->facilities()->delete();
         $room->delete();
 
-        return back()->with('success', 'Room deleted.');
+        return redirect()
+            ->route('admin.rooms.index')
+            ->with('success', 'Ruangan berhasil dihapus!');
     }
 
-    /* ============================
-       FASILITAS (CRUD)
-       ============================ */
-
-    // Tambah fasilitas ke ruangan
-    public function addFacility(Request $request, $room_id)
+    // ============================
+    // FASILITAS DALAM RUANGAN
+    // ============================
+    public function addFacility(Request $request, Room $room)
     {
         $request->validate([
             'name' => 'required',
             'quantity' => 'required|integer',
         ]);
 
-        Facility::create([
-            'room_id' => $room_id,
-            'name' => $request->name,
-            'quantity' => $request->quantity,
-        ]);
+        $room->facilities()->create($request->only('name', 'quantity'));
 
-        return back()->with('success', 'Facility added.');
+        return back()->with('success', 'Fasilitas ditambahkan');
     }
 
-    // Update fasilitas (hanya fasilitas dalam ruangan itu)
-    public function updateFacility(Request $request, $room_id, $facility_id)
+    public function updateFacility(Request $request, Room $room, Facility $facility)
     {
-        $facility = Facility::where('room_id', $room_id)
-            ->where('id', $facility_id)
-            ->firstOrFail();
-
         $request->validate([
             'name' => 'required',
             'quantity' => 'required|integer',
@@ -89,18 +105,12 @@ class RoomController extends Controller
 
         $facility->update($request->only('name', 'quantity'));
 
-        return back()->with('success', 'Facility updated.');
+        return back()->with('success', 'Fasilitas diperbarui');
     }
 
-    // Hapus fasilitas (harus memastikan fasilitas milik ruangan itu)
-    public function deleteFacility($room_id, $facility_id)
+    public function deleteFacility(Room $room, Facility $facility)
     {
-        $facility = Facility::where('room_id', $room_id)
-            ->where('id', $facility_id)
-            ->firstOrFail();
-
         $facility->delete();
-
-        return back()->with('success', 'Facility deleted.');
+        return back()->with('success', 'Fasilitas dihapus');
     }
 }
