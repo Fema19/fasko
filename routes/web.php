@@ -1,36 +1,33 @@
 <?php
 
-use App\Http\Controllers\BookingController;
-use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\FacilityController;
-use App\Http\Controllers\MessageController;
-use App\Http\Controllers\RepairReportController;
-use App\Http\Controllers\RoomController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\{
+    BookingController, CategoryController, FacilityController,
+    MessageController, RepairReportController, RoomController, UserController
+};
 use App\Models\Booking;
-use App\Models\Facility;
-use App\Models\RepairReport;
-use App\Models\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-// =============================
-// WELCOME
-// =============================
+
+/* ======================================================
+   WELCOME
+======================================================*/
 Route::get('/', fn() => view('welcome'));
+Route::get('/admin', fn() => redirect()->route('login'));
+Route::get('/guru', fn() => redirect()->route('login'));
+Route::get('/siswa', fn() => redirect()->route('login'));
 
 
-// =============================
-// LOGIN
-// =============================
+/* ======================================================
+   LOGIN & AUTH
+======================================================*/
 Route::get('/login', fn() => view('auth.login'))->name('login');
 
 Route::post('/login', function (Request $request) {
-
     $credentials = $request->validate([
-        'email' => ['required', 'email'],
-        'password' => ['required'],
+        'email' => 'required|email',
+        'password' => 'required'
     ]);
 
     if (Auth::attempt($credentials)) {
@@ -44,113 +41,112 @@ Route::post('/login', function (Request $request) {
         };
     }
 
-    return back()->withErrors([
-        'email' => 'Email atau password salah'
-    ])->onlyInput('email');
-
+    return back()->withErrors(['email'=>'Email atau password salah'])->onlyInput('email');
 })->name('login.attempt');
 
 
-// =============================
-// LOGOUT GLOBAL (semua role)
-// =============================
-Route::post('/logout', function (Request $request) {
+/* ======================================================
+   LOGOUT
+======================================================*/
+Route::post('/logout', function(Request $request){
     Auth::logout();
     $request->session()->invalidate();
     $request->session()->regenerateToken();
-    return redirect('/')->with('success', 'Berhasil logout');
+    return redirect('/')->with('success','Berhasil logout');
 })->name('logout');
 
 
-// =============================
-// PUBLIC RESOURCES
-// =============================
+/* ======================================================
+   PUBLIC
+======================================================*/
 Route::resource('messages', MessageController::class);
 
 
-// =============================
-// ADMIN ROUTES
-// =============================
-// =============================
-// ADMIN ROUTES
-// =============================
-Route::middleware(['auth', 'role:admin'])
-    ->prefix('admin')
-    ->name('admin.')
+/* ======================================================
+   ADMIN PANEL
+======================================================*/
+Route::middleware(['auth','role:admin'])
+    ->prefix('admin')->name('admin.')
     ->group(function () {
 
-        Route::post('/logout', function (Request $request) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-            return redirect('/login')->with('success', 'Anda berhasil logout sebagai Admin');
-        })->name('logout');
+        Route::get('/dashboard', function(){
+            $data = [
+                'totalUsers'       => \App\Models\User::count(),
+                'totalRooms'       => \App\Models\Room::count(),
+                'totalFacilities'  => \App\Models\Facility::count(),
+                'pendingBookings'  => \App\Models\Booking::where('status','pending')->count(),
+                'reports'          => \App\Models\RepairReport::where('status','pending')->count(),
+            ];
 
-        Route::get('/dashboard', function () {
-            return view('admin.dashboard');
+            return view('admin.dashboard', $data);
         })->name('dashboard');
 
-        Route::resource('rooms', RoomController::class);
-        Route::resource('facilities', FacilityController::class);
-        Route::resource('categories', CategoryController::class);
-        Route::resource('bookings', BookingController::class);
-        Route::resource('repair-reports', RepairReportController::class);
         Route::resource('users', UserController::class);
+        Route::resource('rooms', RoomController::class);
+        Route::resource('categories', CategoryController::class);
+        Route::resource('facilities', FacilityController::class);
+
+        // Booking (Admin full access)
+        Route::get('/bookings/requests', [BookingController::class,'requests'])->name('bookings.requests');
+        Route::get('/bookings/history',  [BookingController::class,'history'])->name('bookings.history');
+        Route::get('/bookings/{booking}',[BookingController::class,'show'])->name('bookings.show');
+
+        Route::put('/bookings/{booking}/approve',  [BookingController::class,'approve'])->name('bookings.approve');
+        Route::put('/bookings/{booking}/reject',   [BookingController::class,'reject'])->name('bookings.reject');
+        Route::put('/bookings/{booking}/complete', [BookingController::class,'complete'])->name('bookings.complete');
+        
+        // Admin pantau & ubah status laporan
+        Route::resource('repair-reports', RepairReportController::class)->only(['index']);
+        Route::put('/repair-reports/{report}/status', [RepairReportController::class,'updateStatus'])->name('repair-reports.status');
     });
 
 
-
-// =============================
-// GURU ROUTES
-// =============================
-Route::middleware(['auth', 'role:guru'])
-    ->prefix('guru')
-    ->name('guru.')
+/* ======================================================
+   GURU PANEL (BOOKING + APPROVE JIKA PENGURUS RUANGAN)
+======================================================*/
+Route::middleware(['auth','role:guru'])
+    ->prefix('guru')->name('guru.')
     ->group(function () {
 
-        Route::post('/logout', function (Request $request) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-            return redirect('/login')->with('success', 'Anda berhasil logout sebagai Guru');
-        })->name('logout');
-
-        Route::get('/dashboard', function () {
-            $user = Auth::user();
-            $room = $user->room?->load('facilities');
+        Route::get('/dashboard', function(){
+            $room = Auth::user()->room?->load('facilities');
             return view('guru.dashboard', compact('room'));
         })->name('dashboard');
 
+        // Route khusus penanggung jawab ruangan (diletakkan sebelum resource agar tidak tertabrak oleh /bookings/{booking})
+        Route::middleware('check.room.owner')->group(function (){
+            Route::get('/bookings/requests', [BookingController::class,'requests'])->name('bookings.requests');
+            Route::put('/bookings/{booking}/approve',  [BookingController::class,'approve'])->name('bookings.approve');
+            Route::put('/bookings/{booking}/reject',   [BookingController::class,'reject'])->name('bookings.reject');
+            Route::put('/bookings/{booking}/complete', [BookingController::class,'complete'])->name('bookings.complete');
+        });
+
+        // Guru level normal => booking seperti siswa
+        Route::resource('bookings', BookingController::class);
+
         Route::resource('facilities', FacilityController::class);
-        Route::resource('booking', BookingController::class);
         Route::resource('reports', RepairReportController::class);
+        Route::put('/reports/{report}/status', [RepairReportController::class,'updateStatus'])->name('reports.status');
     });
 
 
-// =============================
-// SISWA ROUTES
-// =============================
-Route::middleware(['auth', 'role:siswa'])
-    ->prefix('siswa')
-    ->name('siswa.')
-    ->group(function () {
+/* ======================================================
+   SISWA
+======================================================*/
+Route::middleware(['auth','role:siswa'])
+    ->prefix('siswa')->name('siswa.')
+    ->group(function(){
 
-        Route::post('/logout', function (Request $request) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-            return redirect('/login')->with('success', 'Anda berhasil logout sebagai Siswa');
-        })->name('logout');
-
-        Route::get('/dashboard', function () {
-            $userId = Auth::id();
-            return view('siswa.dashboard', [
-                'totalBookings' => Booking::where('user_id', $userId)->count(),
-                'approved'      => Booking::where('user_id', $userId)->where('status', 'approved')->count(),
-                'pending'       => Booking::where('user_id', $userId)->where('status', 'pending')->count(),
+        Route::get('/dashboard', function(){
+            $u = Auth::id();
+            return view('siswa.dashboard',[
+                'totalBookings'=>Booking::where('user_id',$u)->count(),
+                'approved'=> Booking::where('user_id',$u)->where('status','approved')->count(),
+                'pending'=> Booking::where('user_id',$u)->where('status','pending')->count()
             ]);
         })->name('dashboard');
 
-        Route::resource('booking', BookingController::class);
-        Route::resource('report', RepairReportController::class);
+        Route::resource('bookings', BookingController::class);
+        Route::resource('reports', RepairReportController::class);
+        Route::get('/facilities', [FacilityController::class,'index'])->name('facilities.index');
     });

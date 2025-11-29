@@ -1,81 +1,63 @@
 @extends('layouts.admin')
-@section('page_title', 'Edit Pengguna')
+@section('page_title','Edit Pengguna')
 
 @section('content')
 
 <h1 class="text-3xl font-bold mb-6">Edit Pengguna</h1>
 
-<form method="POST" action="{{ route('admin.users.update', $user) }}" class="bg-white p-6 rounded shadow">
+<form method="POST" action="{{ route('admin.users.update',$user) }}" class="bg-white p-6 rounded shadow max-w-xl">
     @csrf
     @method('PUT')
 
     {{-- Nama --}}
     <div class="mb-4">
-        <label class="block text-gray-700 font-bold mb-2">Nama</label>
-        <input type="text" name="name" value="{{ old('name', $user->name) }}"
-               class="w-full border rounded px-3 py-2 @error('name') border-red-500 @enderror" required>
-        @error('name') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
+        <label class="font-semibold text-gray-800">Nama</label>
+        <input type="text" name="name" value="{{ old('name',$user->name) }}" class="w-full border rounded px-3 py-2" required>
     </div>
 
     {{-- Email --}}
     <div class="mb-4">
-        <label class="block text-gray-700 font-bold mb-2">Email</label>
-        <input type="email" name="email" value="{{ old('email', $user->email) }}"
-               class="w-full border rounded px-3 py-2 @error('email') border-red-500 @enderror" required>
-        @error('email') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
+        <label class="font-semibold">Email</label>
+        <input type="email" name="email" value="{{ old('email',$user->email) }}" class="w-full border rounded px-3 py-2" required>
     </div>
 
     {{-- Role --}}
     <div class="mb-4">
-        <label class="block text-gray-700 font-bold mb-2">Role</label>
-        <select name="role" onchange="toggleRoomSelect()"
-                class="w-full border rounded px-3 py-2 @error('role') border-red-500 @enderror" required>
-            <option value="guru"  {{ old('role', $user->role) === 'guru'?'selected':'' }}>Guru</option>
-            <option value="siswa" {{ old('role', $user->role) === 'siswa'?'selected':'' }}>Siswa</option>
+        <label class="font-semibold">Role</label>
+        <select name="role" id="roleInput" onchange="toggleRoomSelect()" class="w-full border rounded px-3 py-2">
+            <option value="guru"  {{ $user->role=='guru'?'selected':'' }}>Guru</option>
+            <option value="siswa" {{ $user->role=='siswa'?'selected':'' }}>Siswa</option>
         </select>
-        @error('role') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
     </div>
 
-    {{-- Ruangan untuk guru --}}
-    <div class="mb-4" id="room-select" style="display: {{ old('role', $user->role)=='guru'?'block':'none' }}">
-        <label class="block text-gray-700 font-bold mb-2">Ruangan (Khusus Guru)</label>
-        <select name="room_id" class="w-full border rounded px-3 py-2 @error('room_id') border-red-500 @enderror">
-            <option value="">Pilih Ruangan</option>
+    {{-- Room (for guru) --}}
+    <div class="mb-4 {{ $user->role=='guru'?'':'hidden' }}" id="roomField">
+        <label class="font-semibold">Ruangan yang dikelola (opsional)</label>
+        <select name="room_id" class="w-full border rounded px-3 py-2">
+            <option value="">Guru tanpa ruangan</option>
             @foreach($rooms as $room)
-                <option value="{{ $room->id }}" {{ old('room_id',$user->room_id)==$room->id?'selected':'' }}>
+                <option value="{{ $room->id }}" {{ $user->room_id==$room->id?'selected':'' }}>
                     {{ $room->name }}
                 </option>
             @endforeach
         </select>
-        @error('room_id') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
     </div>
 
     {{-- Password --}}
-    <div class="mb-4">
-        <label class="block text-gray-700 font-bold mb-2">Password (kosongkan jika tidak ingin mengubah)</label>
-        <input type="password" name="password"
-               class="w-full border rounded px-3 py-2 @error('password') border-red-500 @enderror">
-        @error('password') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
-    </div>
-
-    {{-- Konfirmasi Password --}}
     <div class="mb-6">
-        <label class="block text-gray-700 font-bold mb-2">Konfirmasi Password</label>
-        <input type="password" name="password_confirmation" class="w-full border rounded px-3 py-2">
+        <label class="font-semibold">Password (opsional)</label>
+        <input type="password" name="password" class="w-full border rounded px-3 py-2">
     </div>
 
-    <div class="flex gap-2">
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Simpan</button>
-        <a href="{{ route('admin.users.index') }}" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Batal</a>
-    </div>
+    <button class="bg-blue-600 text-white px-4 py-2 rounded">Simpan</button>
+    <a href="{{ route('admin.users.index') }}" class="px-4 py-2 rounded bg-gray-500 text-white">Batal</a>
 </form>
 
-{{-- Script dalam section, AMAN --}}
 <script>
-    function toggleRoomSelect(){
-        const role = document.querySelector('[name="role"]').value;
-        document.getElementById('room-select').style.display = role === 'guru' ? 'block' : 'none';
-    }
+function toggleRoomSelect(){
+    let role = document.getElementById("roleInput").value;
+    document.getElementById("roomField").classList.toggle("hidden", role !== "guru");
+}
 </script>
 
 @endsection

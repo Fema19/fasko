@@ -25,6 +25,8 @@
                     <th class="px-5 py-3 text-left">Kategori</th>
                     <th class="px-5 py-3 text-left">Ruangan</th>
                     <th class="px-5 py-3 text-left">Kondisi</th>
+                    <th class="px-5 py-3 text-left">Kapasitas</th>
+                    <th class="px-5 py-3 text-left">Stok</th>
                     <th class="px-5 py-3 text-center">Aksi</th>
                 </tr>
             </thead>
@@ -59,6 +61,12 @@
                         <span class="px-2 py-1 text-xs rounded font-bold {{ $badge }}">
                             {{ strtoupper($f->condition) }}
                         </span>
+                    </td>
+                    <td class="px-5 py-3 text-gray-700">
+                        {{ $f->capacity ?? '-' }}
+                    </td>
+                    <td class="px-5 py-3 text-gray-700">
+                        {{ $f->stock ?? 'N/A' }}
                     </td>
 
                     <td class="px-5 py-3">

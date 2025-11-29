@@ -54,6 +54,16 @@
             </span>
         </p>
 
+        <p class="mb-2">
+            <span class="font-semibold text-gray-600">Kapasitas :</span>
+            <span class="text-gray-800">{{ $facility->capacity ?? '-' }}</span>
+        </p>
+
+        <p class="mb-2">
+            <span class="font-semibold text-gray-600">Stok :</span>
+            <span class="text-gray-800">{{ $facility->stock ?? 'N/A' }}</span>
+        </p>
+
         {{-- DESKRIPSI --}}
         <div class="mt-4">
             <p class="font-semibold text-gray-600 mb-1">Deskripsi :</p>

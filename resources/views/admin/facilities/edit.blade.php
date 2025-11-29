@@ -6,7 +6,7 @@
     <h1 class="text-2xl font-bold mb-4">Edit Fasilitas</h1>
 
     <div class="bg-white p-4 rounded shadow">
-        <form method="POST" action="{{ route('admin.facilities.update',$facility) }}">
+        <form method="POST" action="{{ route('admin.facilities.update',$facility) }}" enctype="multipart/form-data">
             @csrf @method('PUT')
 
             <div class="mb-4">
@@ -53,6 +53,25 @@
                 <textarea name="description" class="w-full border px-3 py-2 rounded" rows="4">
                     {{ $facility->description }}
                 </textarea>
+            </div>
+
+            <div class="mb-4">
+                <label class="font-semibold">Foto (opsional)</label>
+                <input type="file" name="photo" class="w-full">
+                @if($facility->photo)
+                    <p class="text-xs text-gray-500 mt-1">Foto saat ini: <a href="{{ asset('storage/'.$facility->photo) }}" target="_blank" class="text-blue-600 underline">lihat</a></p>
+                @endif
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="font-semibold">Kapasitas (opsional)</label>
+                    <input type="number" name="capacity" min="1" class="w-full border px-3 py-2 rounded" value="{{ old('capacity', $facility->capacity) }}">
+                </div>
+                <div>
+                    <label class="font-semibold">Stok (opsional)</label>
+                    <input type="number" name="stock" min="0" class="w-full border px-3 py-2 rounded" value="{{ old('stock', $facility->stock) }}">
+                </div>
             </div>
 
             <div class="flex gap-2">

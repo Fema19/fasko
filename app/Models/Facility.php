@@ -15,6 +15,7 @@ class Facility extends Model
         'description',
         'photo',
         'capacity',
+        'stock',
     ];
 
     public function category()

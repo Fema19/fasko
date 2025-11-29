@@ -6,107 +6,185 @@ use App\Models\Category;
 use App\Models\Facility;
 use App\Models\Room;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class FacilityController extends Controller
 {
-    // ==========================
-    // INDEX
-    // ==========================
+    /* ==========================
+       INDEX — tampil berdasarkan role
+    ==========================*/
     public function index()
     {
-        $facilities = Facility::with(['category', 'room'])->latest()->get();
-        return view('admin.facilities.index', compact('facilities'));
+        $user = Auth::user();
+
+        $facilities = Facility::with(['category','room'])->latest()->get();
+
+        if ($user->role === 'admin') {
+            return view('admin.facilities.index', compact('facilities'));
+        }
+
+        if ($user->role === 'guru') {
+            if ($user->room_id) {
+                $facilities = $facilities->where('room_id', $user->room_id);
+                return view('guru.facilities.index', compact('facilities'));
+            }
+            abort(403,"Anda tidak memiliki izin mengelola fasilitas");
+        }
+
+        // siswa melihat daftar fasilitas (read-only)
+        return view('siswa.facilities.index', ['facilities'=>$facilities]);
     }
 
-    // ==========================
-    // SHOW (penting untuk detail)
-    // ==========================
+
+    /* ==========================
+       SHOW (boleh admin & guru PJ)
+    ==========================*/
     public function show(Facility $facility)
     {
-        return view('admin.facilities.show', compact('facility'));
+        if (Auth::user()->role==='guru' && Auth::user()->room_id !== $facility->room_id) {
+            abort(403,'Tidak boleh melihat fasilitas ruangan lain');
+        }
+
+        return view(
+            Auth::user()->role==='admin' ? 'admin.facilities.show' : 'guru.facilities.show',
+            compact('facility')
+        );
     }
 
-    // ==========================
-    // CREATE
-    // ==========================
+
+    /* ==========================
+       CREATE — hanya admin & guru PJ
+    ==========================*/
     public function create()
     {
-        $categories = Category::all();
-        $rooms = Room::all();
-        return view('admin.facilities.create', compact('categories', 'rooms'));
+        $user = Auth::user();
+
+        if ($user->role==='guru' && !$user->room_id) abort(403,'Tidak punya ruangan');
+
+        return view(
+            $user->role==='admin' ? 'admin.facilities.create' : 'guru.facilities.create',
+            [
+                'categories'=>Category::all(),
+                'rooms'=>$user->role==='admin'
+                    ? Room::all()
+                    : Room::where('id',$user->room_id)->get()
+            ]
+        );
     }
 
-    // ==========================
-    // STORE
-    // ==========================
+
+    /* ==========================
+       STORE
+    ==========================*/
     public function store(Request $request)
     {
-        $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'room_id'     => 'required|exists:rooms,id',
-            'name'        => 'required|max:100',
-            'condition'   => 'required|in:baik,rusak,perawatan,hilang',
-            'description' => 'nullable|string',
-            'photo'       => 'nullable|image|max:2048',
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'category_id'=>'required|exists:categories,id',
+            'room_id'=>'nullable|exists:rooms,id',
+            'name'=>'required|max:100',
+            'condition'=>'required|in:baik,rusak,perawatan,hilang',
+            'description'=>'nullable|string',
+            'photo'=>'nullable|image|max:2048',
+            'capacity'=>'nullable|integer|min:1',
+            'stock'=>'nullable|integer|min:0',
         ]);
 
-        $data = $request->all();
-
-        if ($request->hasFile('photo')) {
-            $data['photo'] = $request->file('photo')->store('facility_photos', 'public');
+        // Guru hanya boleh tambah fasilitas pada ruangannya sendiri
+        if ($user->role==='guru') {
+            if (! $user->room_id) abort(403,'Tidak punya ruangan');
+            $validated['room_id'] = $user->room_id; // paksa sesuai ruangan guru
         }
 
-        Facility::create($data);
+        // kapasitas opsional -> default 1 jika tidak diisi
+        if (!isset($validated['capacity'])) {
+            $validated['capacity'] = 1;
+        }
 
-        return redirect()->route('admin.facilities.index')
-            ->with('success', 'Fasilitas berhasil ditambahkan');
+        if ($request->hasFile('photo'))
+            $validated['photo']=$request->file('photo')->store('facility_photos','public');
+
+        Facility::create($validated);
+
+        return redirect()->route(
+            $user->role === 'admin' ? 'admin.facilities.index' : 'guru.facilities.index'
+        )->with('success','Fasilitas berhasil ditambahkan');
     }
 
-    // ==========================
-    // EDIT
-    // ==========================
+
+    /* ==========================
+       EDIT
+    ==========================*/
     public function edit(Facility $facility)
     {
-        $categories = Category::all();
-        $rooms      = Room::all();
+        $user = Auth::user();
 
-        return view('admin.facilities.edit', compact('facility', 'categories', 'rooms'));
+        if ($user->role==='guru' && $facility->room_id != $user->room_id)
+            abort(403,'Tidak punya akses edit');
+
+        return view(
+            $user->role==='admin' ? 'admin.facilities.edit' : 'guru.facilities.edit',
+            [
+                'facility'=>$facility,
+                'categories'=>Category::all(),
+                'rooms'=>$user->role==='admin'
+                    ? Room::all()
+                    : Room::where('id',$user->room_id)->get()
+            ]
+        );
     }
 
-    // ==========================
-    // UPDATE
-    // ==========================
+
+    /* ==========================
+       UPDATE
+    ==========================*/
     public function update(Request $request, Facility $facility)
     {
-        $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'room_id'     => 'required|exists:rooms,id',
-            'name'        => 'required|max:100',
-            'condition'   => 'required|in:baik,rusak,perawatan,hilang',
-            'description' => 'nullable|string',
-            'photo'       => 'nullable|image|max:2048',
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'category_id'=>'required|exists:categories,id',
+            'room_id'=>'nullable|exists:rooms,id',
+            'name'=>'required|max:100',
+            'condition'=>'required|in:baik,rusak,perawatan,hilang',
+            'description'=>'nullable|string',
+            'photo'=>'nullable|image|max:2048',
+            'capacity'=>'nullable|integer|min:1',
+            'stock'=>'nullable|integer|min:0',
         ]);
 
-        $data = $request->all();
-
-        if ($request->hasFile('photo')) {
-            $data['photo'] = $request->file('photo')->store('facility_photos', 'public');
+        if ($user->role==='guru') {
+            if ($facility->room_id != $user->room_id) 
+                abort(403,'Tidak boleh mengubah fasilitas ini');
+            $validated['room_id'] = $user->room_id;
         }
 
-        $facility->update($data);
+        if (!isset($validated['capacity'])) {
+            $validated['capacity'] = 1;
+        }
 
-        return redirect()->route('admin.facilities.index')
-            ->with('success', 'Fasilitas berhasil diperbarui');
+        if ($request->hasFile('photo'))
+            $validated['photo']=$request->file('photo')->store('facility_photos','public');
+
+        $facility->update($validated);
+
+        return redirect()->route(
+            $user->role === 'admin' ? 'admin.facilities.index' : 'guru.facilities.index'
+        )->with('success','Fasilitas berhasil diperbarui');
     }
 
-    // ==========================
-    // DELETE
-    // ==========================
+
+    /* ==========================
+       DELETE
+    ==========================*/
     public function destroy(Facility $facility)
     {
+        if (Auth::user()->role==='guru' && $facility->room_id != Auth::user()->room_id)
+            abort(403,'Tidak punya izin menghapus');
+
         $facility->delete();
 
-        return redirect()->route('admin.facilities.index')
-            ->with('success', 'Fasilitas berhasil dihapus');
+        return back()->with('success','Fasilitas dihapus');
     }
 }

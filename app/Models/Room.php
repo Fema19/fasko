@@ -10,21 +10,22 @@ class Room extends Model
         'name',
         'code',
         'description',
+        'user_id', // Penting! Untuk relasi ke guru penanggung jawab
     ];
 
-    // Setiap ruangan punya banyak fasilitas
+    /**
+     * Relasi: Ruangan dimiliki oleh satu user (guru penanggung jawab)
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Relasi: Ruangan memiliki banyak fasilitas
+     */
     public function facilities()
     {
         return $this->hasMany(Facility::class);
     }
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-    public function users()
-{
-    return $this->hasMany(User::class, 'room_id');
-}
-
 }

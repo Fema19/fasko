@@ -9,105 +9,109 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index(): mixed
+    /* ==========================================================
+        🧾 LIST USER
+    ==========================================================*/
+    public function index()
     {
-        $users = User::where('role', '!=', 'admin')->get();
-
-        return $this->view('users.index', compact('users'));
+        $users = User::where('role','!=','admin')->get(); // admin tidak ikut tampil
+        return view('admin.users.index', compact('users'));
     }
 
-    public function create(): mixed
+    /* ==========================================================
+        ➕ FORM TAMBAH USER
+    ==========================================================*/
+    public function create()
     {
-        $rooms = Room::all();
-        $roles = ['guru', 'siswa'];
-
-        return $this->view('users.create', compact('rooms', 'roles'));
+        return view('admin.users.create', [
+            'rooms' => Room::all(),
+            'roles' => ['guru','siswa'] // tidak include admin
+        ]);
     }
 
-    public function store(Request $request): mixed
+    /* ==========================================================
+        💾 SIMPAN USER
+    ==========================================================*/
+    public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|confirmed|min:6',
-            'role' => 'required|in:guru,siswa',
-            'room_id' => 'nullable|exists:rooms,id',
+            'name'      => 'required|string|max:255',
+            'email'     => 'required|email|unique:users,email',
+            'password'  => 'required|confirmed|min:6',
+            'role'      => 'required|in:guru,siswa',
+            'room_id'   => 'nullable|exists:rooms,id'
         ]);
 
-        // Jika role guru, room_id harus dipilih
-        if ($data['role'] === 'guru' && ! $data['room_id']) {
-            return back()->withErrors(['room_id' => 'Ruangan harus dipilih untuk guru']);
-        }
+        // Guru boleh tanpa ruangan (guru biasa) atau ditugaskan ke satu ruangan (punya akses approve)
+        $roomId = $data['role'] === 'guru' ? ($data['room_id'] ?? null) : null;
 
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-            'role' => $data['role'],
-            'room_id' => $data['room_id'] ?? null,
+        User::create([
+            'name'      => $data['name'],
+            'email'     => $data['email'],
+            'password'  => Hash::make($data['password']),
+            'role'      => $data['role'],
+            'room_id'   => $roomId,
         ]);
 
-        return redirect()->route('admin.users.index')->with('success', "User {$user->name} berhasil dibuat");
+        return redirect()->route('admin.users.index')
+            ->with('success','Pengguna berhasil ditambahkan');
     }
 
-    public function show(User $user)
+    /* ==========================================================
+        ✏ EDIT USER
+    ==========================================================*/
+    public function edit(User $user)
     {
-        //
+        if($user->role === 'admin') abort(403);
+
+        return view('admin.users.edit', [
+            'user'  => $user,
+            'rooms' => Room::all(),
+            'roles' => ['guru','siswa']
+        ]);
     }
 
-    public function edit(User $user): mixed
+    /* ==========================================================
+        🔄 UPDATE USER
+    ==========================================================*/
+    public function update(Request $request, User $user)
     {
-        if ($user->role === 'admin') {
-            abort(403, 'Tidak bisa edit akun admin');
-        }
-
-        $rooms = Room::all();
-        $roles = ['guru', 'siswa'];
-
-        return $this->view('users.edit', compact('user', 'rooms', 'roles'));
-    }
-
-    public function update(Request $request, User $user): mixed
-    {
-        if ($user->role === 'admin') {
-            abort(403, 'Tidak bisa edit akun admin');
-        }
+        if($user->role === 'admin') abort(403);
 
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => "required|email|unique:users,email,{$user->id}",
-            'password' => 'nullable|confirmed|min:6',
-            'role' => 'required|in:guru,siswa',
-            'room_id' => 'nullable|exists:rooms,id',
+            'name'      => 'required|string|max:255',
+            'email'     => "required|email|unique:users,email,{$user->id}",
+            'password'  => 'nullable|confirmed|min:6',
+            'role'      => 'required|in:guru,siswa',
+            'room_id'   => 'nullable|exists:rooms,id',
         ]);
 
-        // Jika role guru, room_id harus dipilih
-        if ($data['role'] === 'guru' && ! $data['room_id']) {
-            return back()->withErrors(['room_id' => 'Ruangan harus dipilih untuk guru']);
-        }
+        $roomId = $data['role'] === 'guru' ? ($data['room_id'] ?? null) : null;
 
         $user->update([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'role' => $data['role'],
-            'room_id' => $data['room_id'] ?? null,
+            'name'      => $data['name'],
+            'email'     => $data['email'],
+            'role'      => $data['role'],
+            'room_id'   => $roomId,
         ]);
 
-        if ($data['password']) {
-            $user->update(['password' => Hash::make($data['password'])]);
-        }
+        if($data['password'])
+            $user->update(['password'=>Hash::make($data['password'])]);
 
-        return redirect()->route('admin.users.index')->with('success', "User {$user->name} berhasil diperbarui");
+        return redirect()->route('admin.users.index')
+            ->with('success','Pengguna berhasil diperbarui');
     }
 
-    public function destroy(User $user): mixed
+    /* ==========================================================
+        ❌ HAPUS USER
+    ==========================================================*/
+    public function destroy(User $user)
     {
-        if ($user->role === 'admin') {
-            abort(403, 'Tidak bisa hapus akun admin');
-        }
+        if($user->role === 'admin') abort(403);
 
         $user->delete();
 
-        return redirect()->route('admin.users.index')->with('success', 'User berhasil dihapus');
+        return redirect()->route('admin.users.index')
+            ->with('success','Pengguna berhasil dihapus');
     }
 }

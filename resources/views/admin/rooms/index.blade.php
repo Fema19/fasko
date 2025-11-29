@@ -6,7 +6,7 @@
     <h1 class="text-3xl font-bold text-gray-800">Daftar Ruangan</h1>
 
     <a href="{{ route('admin.rooms.create') }}" 
-       class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow">
+       class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow transition">
        + Tambah Ruangan
     </a>
 </div>
@@ -34,9 +34,9 @@
             @forelse($rooms as $room)
                 <tr class="border-b hover:bg-gray-50 transition">
 
-                    <td class="px-4 py-3 text-gray-800 font-medium">{{ $loop->iteration }}</td>
+                    <td class="px-4 py-3 font-medium text-gray-800">{{ $loop->iteration }}</td>
 
-                    <td class="px-4 py-3 text-gray-900 font-medium">
+                    <td class="px-4 py-3 font-semibold text-gray-900">
                         {{ $room->name }}
                     </td>
 
@@ -50,11 +50,11 @@
                                 {{ $room->user->name }}
                             </span>
                         @else
-                            <span class="text-gray-500">-</span>
+                            <span class="text-gray-500 text-xs">Belum Ada</span>
                         @endif
                     </td>
 
-                    <td class="px-4 py-3 text-center space-x-1">
+                    <td class="px-4 py-3 text-center flex items-center gap-3 justify-center">
 
                         <a href="{{ route('admin.rooms.show', $room) }}" 
                            class="text-blue-600 hover:text-blue-800 font-medium">
@@ -68,8 +68,7 @@
 
                         <form method="POST" action="{{ route('admin.rooms.destroy', $room) }}" class="inline"
                               onsubmit="return confirm('Yakin ingin menghapus ruangan ini?')">
-                            @csrf
-                            @method('DELETE')
+                            @csrf @method('DELETE')
                             <button class="text-red-600 hover:text-red-800 font-medium">
                                 Hapus
                             </button>

@@ -10,35 +10,40 @@
     <form method="POST" action="{{ route('admin.rooms.store') }}">
         @csrf
 
-        {{-- Nama Ruangan --}}
+        {{-- NAMA --}}
         <div class="mb-5">
-            <label class="block font-semibold mb-2 text-gray-700">Nama Ruangan</label>
+            <label class="block font-semibold mb-2">Nama Ruangan</label>
             <input type="text" name="name" value="{{ old('name') }}"
-                   class="w-full border rounded px-3 py-2 @error('name') border-red-500 @enderror"
-                   placeholder="Masukkan nama ruangan..." required>
-            @error('name')
-                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-            @enderror
+                   class="w-full border px-3 py-2 rounded" required>
         </div>
 
-        {{-- Kode Opsional --}}
-        <div class="mb-6">
-            <label class="block font-semibold mb-2 text-gray-700">Kode Ruangan (Opsional)</label>
+        {{-- KODE --}}
+        <div class="mb-5">
+            <label class="block font-semibold mb-2">Kode Ruangan (Opsional)</label>
             <input type="text" name="code" value="{{ old('code') }}"
-                   class="w-full border rounded px-3 py-2"
-                   placeholder="Ex: LAB01 / RAGUD01">
+                   class="w-full border px-3 py-2 rounded">
+        </div>
+
+        {{-- PILIH GURU --}}
+        <div class="mb-6">
+            <label class="block font-semibold mb-2">Guru Penanggung Jawab</label>
+            <select name="user_id" class="w-full border px-3 py-2 rounded">
+                <option value="">-- Tidak Ada Guru --</option>
+
+                @foreach($gurus as $g)
+                    <option value="{{ $g->id }}" 
+                        {{ old('user_id') == $g->id ? 'selected' : '' }}>
+                        {{ $g->name }} ({{ $g->email }})
+                    </option>
+                @endforeach
+            </select>
         </div>
 
         <div class="flex gap-2">
-            <button type="submit"
-                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium">
-                Simpan
-            </button>
-            <a href="{{ route('admin.rooms.index') }}"
-                class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 font-medium">
-                Batal
-            </a>
+            <button class="bg-blue-600 text-white px-4 py-2 rounded">Simpan</button>
+            <a href="{{ route('admin.rooms.index') }}" class="bg-gray-400 text-white px-4 py-2 rounded">Batal</a>
         </div>
+
     </form>
 
 </div>

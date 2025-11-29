@@ -26,7 +26,7 @@
             <a href="{{ route('admin.dashboard') }}"
                class="block px-6 py-3 hover:bg-gray-800 transition">Dashboard</a>
 
-               <a href="{{ route('admin.users.index') }}"
+            <a href="{{ route('admin.users.index') }}"
                class="block px-6 py-3 hover:bg-gray-800 transition">Kelola Pengguna</a>
 
             <a href="{{ route('admin.rooms.index') }}"
@@ -38,8 +38,31 @@
             <a href="{{ route('admin.facilities.index') }}"
                class="block px-6 py-3 hover:bg-gray-800 transition">Kelola Fasilitas</a>
 
-            <!-- 🔥 FIX LOGOUT: HARUS POST -->
-            <form action="{{ route('admin.logout') }}" method="POST">
+            <a href="{{ route('admin.repair-reports.index') }}"
+               class="block px-6 py-3 hover:bg-gray-800 transition">Laporan Kerusakan</a>
+
+            {{-- ============================ --}}
+            {{-- 🔥 Booking Requests (NEW MENU) --}}
+            {{-- ============================ --}}
+            <a href="{{ route('admin.bookings.requests') }}"
+               class="block px-6 py-3 hover:bg-gray-800 transition flex justify-between items-center">
+
+               Permintaan Booking
+
+                @php
+                    $pending = \App\Models\Booking::where('status','pending')->count();
+                @endphp
+
+                @if($pending > 0)
+                <span class="bg-red-500 text-xs px-2 py-1 rounded">
+                    {{ $pending }}
+                </span>
+                @endif
+            </a>
+
+
+            <!-- 🔥 LOGOUT (METHOD POST WAJIB) -->
+            <form action="{{ route('logout') }}" method="POST">
                 @csrf
                 <button type="submit"
                     class="block w-full text-left px-6 py-3 hover:bg-gray-800 transition text-red-400">
