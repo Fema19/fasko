@@ -1,0 +1,12 @@
+flowchart TD
+    A["User (siswa/guru non-PJ)"] -->|Buat booking| B[Booking pending]
+    Admin[Admin / Guru PJ] -->|Approve| C[Booking approved]
+    Admin -->|Reject| Rj[Booking rejected]
+    C -->|Window -30 s/d -25 menit| W{Check-in?}
+    Scheduler[Schedule auto-cancel] --> W
+    W -- Ya --> D["Check-in\nstatus=active\nchecked_in=true"]
+    W -- Lewat window --> X[Auto-cancel]
+    D -->|Menunggu end_time| E{Waktu selesai?}
+    E -- Belum --> D
+    E -- Sudah --> F["Check-out\n(Admin/Guru PJ)\nstatus=completed\nchecked_out=true"]
+    F --> Done[Booking selesai]
