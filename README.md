@@ -29,7 +29,7 @@ Web app manajemen peminjaman fasilitas sekolah dengan alur approval, check-in/ou
 ### Instalasi Cepat
 ```bash
 git clone <repo-url>
-cd fasilitas-sekolah
+cd fasko
 composer install
 npm install
 cp .env.example .env
