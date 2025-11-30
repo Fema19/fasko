@@ -15,6 +15,11 @@ Web app manajemen peminjaman fasilitas sekolah dengan alur approval, check-in/ou
 - Role & akses: Admin, Guru (PJ/non-PJ), Siswa dengan batasan sesuai ruangan/fasilitasnya.
 - Monitoring: dashboard ringkas, pencarian/filter dasar.
 
+### Diagram
+- ERD (Mermaid): `diagrams/erd.mmd`
+- UML alur booking/check-in/out & auto reset: `diagrams/uml.mmd`
+- Tambahkan gambar atau render mermaid sesuai kebutuhan (contoh: plugin VSCode atau GitHub mermaid).
+
 ### Teknologi
 - Backend: Laravel 12, PHP 8.2+, Eloquent ORM.
 - PDF: barryvdh/laravel-dompdf.

@@ -1,12 +1,32 @@
 flowchart TD
-    A["User (siswa/guru non-PJ)"] -->|Buat booking| B[Booking pending]
-    Admin[Admin / Guru PJ] -->|Approve| C[Booking approved]
-    Admin -->|Reject| Rj[Booking rejected]
-    C -->|Window -30 s/d -25 menit| W{Check-in?}
-    Scheduler[Schedule auto-cancel] --> W
-    W -- Ya --> D["Check-in\nstatus=active\nchecked_in=true"]
-    W -- Lewat window --> X[Auto-cancel]
-    D -->|Menunggu end_time| E{Waktu selesai?}
-    E -- Belum --> D
-    E -- Sudah --> F["Check-out\n(Admin/Guru PJ)\nstatus=completed\nchecked_out=true"]
-    F --> Done[Booking selesai]
+    subgraph Pengajuan & Persetujuan
+        U["User (siswa/guru non-PJ)"] -->|Buat booking| P[Booking pending]
+        PJ["Admin / Guru PJ ruang"] -->|Approve| A[Booking approved]
+        PJ -->|Reject| Rj[Booking rejected]
+    end
+
+    subgraph Check-in / Check-out
+        A -->|Window -30 s/d -25 menit| W{Check-in?}
+        Scheduler[Auto-cancel window] --> W
+        W -- Ya --> CI["Check-in\nstatus=active\nchecked_in=true"]
+        W -- Lewat window --> CXL[Auto-cancel]
+        CI -->|Menunggu end_time| S{Waktu selesai?}
+        S -- Belum --> CI
+        S -- Sudah --> CO["Check-out\n(Admin/Guru PJ)\nstatus=completed\nchecked_out=true"]
+        CO --> Done[Booking selesai]
+    end
+
+    subgraph Riwayat
+        Done --> H[History booking]
+        CXL --> H
+        Rj --> H
+        H -->|Reset manual (admin/guru PJ)| Hreset
+        U -->|Auto clear 2 hari setelah selesai| Hclear
+    end
+
+    %% Laporan kerusakan
+    U -->|Kirim laporan kerusakan| L[Repair Report pending]
+    PJ -->|Update status| Lstatus["in_progress / fixed"]
+    Lstatus --> L
+    PJ -->|Reset manual laporan| LRreset
+    U -->|Auto clear laporan > 7 hari| LRclear
