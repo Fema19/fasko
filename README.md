@@ -21,36 +21,37 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
-## ERD (Aplikasi Booking Fasilitas)
+## ERD (Ringkas)
 
 ```mermaid
 erDiagram
-    USERS ||--o{ BOOKINGS : makes
-    USERS ||--o{ ROOMS : manages
-    ROOMS ||--o{ FACILITIES : owns
-    CATEGORIES ||--o{ FACILITIES : groups
-    FACILITIES ||--o{ BOOKINGS : reserved
-    FACILITIES ||--o{ REPAIR_REPORTS : has
-    USERS ||--o{ REPAIR_REPORTS : submits
+    USERS ||--o{ BOOKINGS : membuat
+    USERS ||--o{ ROOMS : PJ
+    ROOMS ||--o{ FACILITIES : memiliki
+    CATEGORIES ||--o{ FACILITIES : mengelompokkan
+    FACILITIES ||--o{ BOOKINGS : dipesan
+    FACILITIES ||--o{ REPAIR_REPORTS : dilaporkan
+    USERS ||--o{ REPAIR_REPORTS : melapor
+    USERS ||--o{ MESSAGES : mengirim
     BOOKINGS ||--o| USERS : approved_by
 
     USERS {
         int id
         string name
         string email
-        enum role
-        int room_id FK
+        enum role       // admin|guru|siswa
+        int room_id FK  // hanya guru PJ
     }
     ROOMS {
         int id
         string name
         string code
-        int user_id FK
+        int user_id FK  // guru PJ
     }
     CATEGORIES {
         int id
         string name
-        string type
+        string type     // unit|capacity
     }
     FACILITIES {
         int id
@@ -59,6 +60,7 @@ erDiagram
         int category_id FK
         int capacity
         int unit
+        enum condition
     }
     BOOKINGS {
         int id
@@ -66,9 +68,13 @@ erDiagram
         int facility_id FK
         datetime start_time
         datetime end_time
-        enum status
+        string reason
+        int capacity_used
+        enum status          // pending|approved|rejected|active|completed|cancelled
         int approved_by FK
+        datetime check_in_time
         bool checked_in
+        datetime check_out_time
         bool checked_out
     }
     REPAIR_REPORTS {
@@ -78,25 +84,30 @@ erDiagram
         string description
         enum status
     }
+    MESSAGES {
+        int id
+        int user_id FK
+        string subject
+        text body
+    }
 ```
 
-## UML (Alur Booking & Check-in/Out)
+## UML (Alur Booking, Check-in, Check-out)
 
 ```mermaid
-flowchart LR
-    A[User (Siswa/Guru non-PJ)] -->|buat booking| B[BookingController.store]
-    B --> C[(Booking pending)]
-    Admin[Admin/Guru PJ] -->|approve/reject| D[BookingController.approve/reject]
-    D -->|approved| E[(Booking approved)]
-    A -->|cek window -30 sd -25 menit| F{Window buka?}
-    F -- ya --> G[BookingController.checkIn\nstatus -> active, checked_in=true]
-    F -- tidak --> H[(Menunggu / Auto-cancel bila window lewat)]
-    Scheduler[Command bookings:cancel-late-checkins] --> H
-    H -->|window lewat & belum check-in| X[(Status cancelled)]
-    G --> I{Waktu selesai?}
-    I -- belum --> G
-    I -- sudah --> J[BookingController.complete\nstatus -> completed, checked_out=true]
-    Admin -->|pantau & check-out jika perlu| J
+flowchart TD
+    A[User (siswa/guru non-PJ)] -->|Buat booking| B[Booking pending]
+    Admin[Admin / Guru PJ] -->|Approve| C[Booking approved]
+    Admin -->|Reject| Rj[Booking rejected]
+    C -->|Window -30 s/d -25 menit| W{Check-in?}
+    Scheduler[Schedule auto-cancel] --> W
+    W -- Ya --> D[Check-in -> status active, checked_in=true]
+    W -- Tidak lewat window --> X[Auto-cancel]
+    D -->|Menunggu end_time| E{Waktu selesai?}
+    E -- Belum --> D
+    E -- Sudah --> F[Check-out (Admin/Guru PJ)\nstatus completed, checked_out=true]
+    F --> Done[Booking selesai]
+    note right of Scheduler: Perintah bookings:cancel-late-checkins tiap menit
 ```
 
 ## Learning Laravel
