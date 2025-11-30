@@ -21,6 +21,84 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
+## ERD (Aplikasi Booking Fasilitas)
+
+```mermaid
+erDiagram
+    USERS ||--o{ BOOKINGS : makes
+    USERS ||--o{ ROOMS : manages
+    ROOMS ||--o{ FACILITIES : owns
+    CATEGORIES ||--o{ FACILITIES : groups
+    FACILITIES ||--o{ BOOKINGS : reserved
+    FACILITIES ||--o{ REPAIR_REPORTS : has
+    USERS ||--o{ REPAIR_REPORTS : submits
+    BOOKINGS ||--o| USERS : approved_by
+
+    USERS {
+        int id
+        string name
+        string email
+        enum role
+        int room_id FK
+    }
+    ROOMS {
+        int id
+        string name
+        string code
+        int user_id FK
+    }
+    CATEGORIES {
+        int id
+        string name
+        string type
+    }
+    FACILITIES {
+        int id
+        string name
+        int room_id FK
+        int category_id FK
+        int capacity
+        int unit
+    }
+    BOOKINGS {
+        int id
+        int user_id FK
+        int facility_id FK
+        datetime start_time
+        datetime end_time
+        enum status
+        int approved_by FK
+        bool checked_in
+        bool checked_out
+    }
+    REPAIR_REPORTS {
+        int id
+        int user_id FK
+        int facility_id FK
+        string description
+        enum status
+    }
+```
+
+## UML (Alur Booking & Check-in/Out)
+
+```mermaid
+flowchart LR
+    A[User (Siswa/Guru non-PJ)] -->|buat booking| B[BookingController.store]
+    B --> C[(Booking pending)]
+    Admin[Admin/Guru PJ] -->|approve/reject| D[BookingController.approve/reject]
+    D -->|approved| E[(Booking approved)]
+    A -->|cek window -30 sd -25 menit| F{Window buka?}
+    F -- ya --> G[BookingController.checkIn\nstatus -> active, checked_in=true]
+    F -- tidak --> H[(Menunggu / Auto-cancel bila window lewat)]
+    Scheduler[Command bookings:cancel-late-checkins] --> H
+    H -->|window lewat & belum check-in| X[(Status cancelled)]
+    G --> I{Waktu selesai?}
+    I -- belum --> G
+    I -- sudah --> J[BookingController.complete\nstatus -> completed, checked_out=true]
+    Admin -->|pantau & check-out jika perlu| J
+```
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
