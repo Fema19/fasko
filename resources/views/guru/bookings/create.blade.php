@@ -59,7 +59,10 @@
                         <span class="inline-block px-2 py-1 text-[11px] rounded border text-slate-700">Kondisi: {{ $f->condition }}</span>
                         <div class="flex flex-wrap gap-2 text-[11px] text-slate-600 mt-1">
                             <span>Kapasitas: {{ $f->capacity ?? '-' }}</span>
-                            <span>Stok: {{ $f->stock ?? 'N/A' }}</span>
+                            <span>
+                                {{ $f->availability_label === 'capacity' ? 'Kapasitas tersedia sekarang' : 'Unit tersedia sekarang' }}:
+                                {{ $f->available_stock_now }} / {{ $f->availability_limit }}
+                            </span>
                         </div>
                         <p class="text-xs text-slate-600 mt-1">{{ \Illuminate\Support\Str::limit($f->description, 80) }}</p>
                         <button type="button" class="mt-2 text-xs px-3 py-2 rounded-md bg-slate-900 text-white w-full select-facility" data-id="{{ $f->id }}" data-name="{{ $f->name }}">Pilih</button>
@@ -91,8 +94,9 @@
 
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block mb-1 text-sm text-slate-700">Jumlah Pengguna</label>
+                    <label class="block mb-1 text-sm text-slate-700">Unit yang dibutuhkan</label>
                     <input type="number" min="1" name="capacity_used" value="{{ old('capacity_used', 1) }}" class="w-full border px-3 py-2 rounded text-sm focus:outline-none focus:ring focus:ring-slate-200" required>
+                    <p class="text-[11px] text-slate-500 mt-1">Tidak boleh melebihi unit tersedia pada fasilitas.</p>
                 </div>
             </div>
 

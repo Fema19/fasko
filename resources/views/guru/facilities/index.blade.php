@@ -25,6 +25,7 @@
                     <th class="px-4 py-2 text-left">Kategori</th>
                     <th class="px-4 py-2 text-left">Kondisi</th>
                     <th class="px-4 py-2 text-left">Ruangan</th>
+                    <th class="px-4 py-2 text-left">Ketersediaan</th>
                     <th class="px-4 py-2 text-center">Aksi</th>
                 </tr>
             </thead>
@@ -35,6 +36,14 @@
                         <td class="px-4 py-2 text-slate-700">{{ $f->category->name ?? '-' }}</td>
                         <td class="px-4 py-2 text-slate-700">{{ ucfirst($f->condition) }}</td>
                         <td class="px-4 py-2 text-slate-700">{{ $f->room->name ?? '-' }}</td>
+                        <td class="px-4 py-2 text-slate-700">
+                            <div class="flex items-center gap-2">
+                                <span>{{ $f->available_stock_now }} / {{ $f->availability_limit }} ({{ $f->availability_label === 'capacity' ? 'kapasitas' : 'unit' }})</span>
+                                @if($f->in_use_now)
+                                    <span class="px-2 py-1 text-[11px] rounded bg-red-100 text-red-700">Sedang dipakai</span>
+                                @endif
+                            </div>
+                        </td>
                         <td class="px-4 py-2 text-center">
                             <div class="inline-flex gap-2">
                                 <a href="{{ route('guru.facilities.edit', $f) }}" class="text-xs px-3 py-1.5 rounded border text-slate-700 hover:bg-slate-50">Edit</a>

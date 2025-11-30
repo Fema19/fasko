@@ -1,42 +1,43 @@
-@extends('layouts.guru')
-@section('page_title', 'Permintaan Booking Ruangan')
+@extends('layouts.admin')
+@section('page_title', 'Permintaan Booking')
 
 @section('content')
-
-<div class="flex justify-between items-start mb-4">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
     <div>
-        <h1 class="text-xl font-semibold text-slate-900">Permintaan Booking</h1>
-        <p class="text-xs text-slate-500 mt-1">ACC atau tolak booking untuk ruangan Anda.</p>
+        <h1 class="text-2xl font-bold text-gray-900">Permintaan Booking</h1>
+        <p class="text-sm text-gray-500">Setujui atau tolak pengajuan peminjaman fasilitas.</p>
     </div>
     <div class="flex gap-2">
-        <form action="{{ route('guru.bookings.history.reset') }}" method="POST" onsubmit="return confirm('Hapus semua history yang sudah lewat?')">
+        <form action="{{ route('admin.bookings.history.reset') }}" method="POST" onsubmit="return confirm('Hapus semua history yang sudah lewat?')">
             @csrf
             @method('DELETE')
-            <button class="text-xs text-red-700 border px-3 py-1.5 rounded hover:bg-red-50">Reset History</button>
+            <button class="text-sm text-red-600 hover:text-red-800 px-3 py-2 border rounded">Reset History</button>
         </form>
-        <a href="{{ route('guru.dashboard') }}" class="text-xs text-slate-600 hover:text-slate-900">Dashboard</a>
+        <a href="{{ route('admin.dashboard') }}" class="text-sm text-gray-600 hover:text-gray-900">Dashboard</a>
     </div>
 </div>
 
-{{-- ===== FILTER TANGGAL ===== --}}
-<div class="bg-white p-4 rounded-lg border mb-4">
-    <form method="GET" class="flex flex-wrap gap-3">
+{{-- Filter tanggal --}}
+<div class="bg-white border rounded-xl p-4 mb-4">
+    <form method="GET" class="flex flex-wrap gap-3 items-end">
         <div class="flex flex-col">
-            <label class="text-xs text-slate-600 font-semibold mb-1">Tanggal</label>
+            <label class="text-xs text-gray-600 font-semibold mb-1">Tanggal</label>
             <input type="date" name="date" value="{{ request('date') }}"
-                class="border rounded px-3 py-2 text-sm focus:ring-slate-200">
+                class="border rounded px-3 py-2 text-sm focus:ring focus:ring-gray-200">
         </div>
-        <div class="flex items-end gap-2">
-            <button class="bg-slate-900 text-white px-3 py-2 rounded text-xs">
+        <div class="flex gap-2">
+            <button class="bg-gray-900 text-white px-3 py-2 rounded text-xs">
                 Filter
             </button>
-            <a href="{{ route('guru.bookings.requests') }}"
-               class="px-3 py-2 border text-xs rounded text-slate-700 hover:bg-slate-50">Reset</a>
+            <a href="{{ route('admin.bookings.requests') }}"
+               class="px-3 py-2 border text-xs rounded text-gray-700 hover:bg-gray-50">
+                Reset
+            </a>
         </div>
     </form>
 </div>
 
-{{-- ===== ALERT MSG ===== --}}
+{{-- Alert --}}
 @if(session('success'))
 <div class="bg-green-50 border-l-4 border-green-600 text-green-900 px-4 py-3 mb-3 text-sm rounded">
     {{ session('success') }}
@@ -49,12 +50,9 @@
 </div>
 @endif
 
-
-{{-- ===== TABLE REQUEST LIST ===== --}}
-<div class="bg-white border rounded-lg overflow-hidden">
-
+<div class="bg-white border rounded-xl overflow-hidden">
     <table class="w-full text-sm">
-        <thead class="bg-slate-50 text-[11px] text-slate-600 uppercase tracking-wide border-b">
+        <thead class="bg-gray-50 text-[11px] text-gray-600 uppercase tracking-wide border-b">
             <tr>
                 <th class="px-4 py-3 text-left">Peminjam</th>
                 <th class="px-4 py-3">Fasilitas</th>
@@ -64,58 +62,50 @@
                 <th class="px-4 py-3 text-center">Aksi</th>
             </tr>
         </thead>
-
         <tbody class="divide-y">
             @forelse($bookings as $b)
             <tr class="hover:bg-gray-50 transition">
-
-                <td class="px-4 py-3 font-medium text-slate-900">{{ $b->user->name }}</td>
-
-                <td class="px-4 py-3 text-slate-700">{{ $b->facility->name }}</td>
-
+                <td class="px-4 py-3 font-medium text-gray-900">{{ $b->user->name }}</td>
+                <td class="px-4 py-3 text-gray-700">{{ $b->facility->name }}</td>
                 <td class="px-4 py-3">{{ date('d M Y H:i', strtotime($b->start_time)) }}</td>
                 <td class="px-4 py-3">{{ date('d M Y H:i', strtotime($b->end_time)) }}</td>
-
-                <td class="px-4 py-3 text-slate-600">{{ $b->reason ?? '-' }}</td>
-
+                <td class="px-4 py-3 text-gray-600">{{ $b->reason ?? '-' }}</td>
                 <td class="px-4 py-3 flex justify-center gap-2">
-                    <form action="{{ route('guru.bookings.approve', $b) }}" method="POST">
-                        @csrf @method('PUT')
-                        <button class="px-3 py-1.5 rounded text-xs bg-slate-900 text-white hover:bg-slate-800">
+                    <form action="{{ route('admin.bookings.approve', $b) }}" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <button class="px-3 py-1.5 rounded text-xs bg-gray-900 text-white hover:bg-gray-800">
                             ACC
                         </button>
                     </form>
-
-                    <form action="{{ route('guru.bookings.reject', $b) }}" method="POST">
-                        @csrf @method('PUT')
-                        <button class="px-3 py-1.5 rounded text-xs border text-slate-700 hover:bg-slate-50">
+                    <form action="{{ route('admin.bookings.reject', $b) }}" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <button class="px-3 py-1.5 rounded text-xs border text-gray-700 hover:bg-gray-50">
                             Tolak
                         </button>
                     </form>
-
                 </td>
             </tr>
             @empty
-
             <tr>
-                <td colspan="6" class="text-center py-6 text-slate-500 text-sm">
-                    Tidak ada booking menunggu persetujuan untuk ruangan Anda.
+                <td colspan="6" class="text-center py-6 text-gray-500 text-sm">
+                    Tidak ada permintaan booking menunggu persetujuan.
                 </td>
             </tr>
-
             @endforelse
         </tbody>
     </table>
 </div>
 
 {{-- History terbaru --}}
-<div class="bg-white border rounded-lg overflow-hidden mt-5">
+<div class="bg-white border rounded-xl mt-5">
     <div class="px-4 py-3 border-b flex items-center justify-between">
-        <h2 class="text-sm font-semibold text-slate-900">Riwayat Terbaru</h2>
-        <span class="text-xs text-slate-500">Maks. 10 data</span>
+        <h2 class="text-sm font-semibold text-gray-800">Riwayat Terbaru</h2>
+        <span class="text-xs text-gray-500">Maks. 10 data</span>
     </div>
     <table class="w-full text-sm">
-        <thead class="bg-slate-50 text-[11px] text-slate-600 uppercase tracking-wide border-b">
+        <thead class="bg-gray-50 text-[11px] text-gray-600 uppercase tracking-wide border-b">
             <tr>
                 <th class="px-4 py-3 text-left">Peminjam</th>
                 <th class="px-4 py-3">Fasilitas</th>
@@ -127,17 +117,17 @@
         <tbody class="divide-y">
             @forelse($history as $h)
             <tr class="hover:bg-gray-50 transition">
-                <td class="px-4 py-3 font-medium text-slate-900">{{ $h->user->name }}</td>
-                <td class="px-4 py-3 text-slate-700">{{ $h->facility->name }}</td>
+                <td class="px-4 py-3 font-medium text-gray-900">{{ $h->user->name }}</td>
+                <td class="px-4 py-3 text-gray-700">{{ $h->facility->name }}</td>
                 <td class="px-4 py-3">{{ date('d M Y H:i', strtotime($h->start_time)) }}</td>
                 <td class="px-4 py-3">{{ date('d M Y H:i', strtotime($h->end_time)) }}</td>
                 <td class="px-4 py-3">
-                    <span class="px-2 py-1 rounded text-xs border text-slate-700 capitalize">{{ $h->status }}</span>
+                    <span class="px-2 py-1 rounded text-xs border text-gray-700 capitalize">{{ $h->status }}</span>
                 </td>
             </tr>
             @empty
             <tr>
-                <td colspan="5" class="text-center py-6 text-slate-500 text-sm">
+                <td colspan="5" class="text-center py-6 text-gray-500 text-sm">
                     Belum ada riwayat.
                 </td>
             </tr>
@@ -147,13 +137,13 @@
 </div>
 
 {{-- Approved/Active untuk Check-in/Check-out --}}
-<div class="bg-white border rounded-lg overflow-hidden mt-5">
+<div class="bg-white border rounded-xl mt-5">
     <div class="px-4 py-3 border-b flex items-center justify-between">
-        <h2 class="text-sm font-semibold text-slate-900">Perlu Check-in / Check-out</h2>
-        <span class="text-xs text-slate-500">Status approved/active</span>
+        <h2 class="text-sm font-semibold text-gray-800">Perlu Check-in / Check-out</h2>
+        <span class="text-xs text-gray-500">Status approved/active</span>
     </div>
     <table class="w-full text-sm">
-        <thead class="bg-slate-50 text-[11px] text-slate-600 uppercase tracking-wide border-b">
+        <thead class="bg-gray-50 text-[11px] text-gray-600 uppercase tracking-wide border-b">
             <tr>
                 <th class="px-4 py-3 text-left">Peminjam</th>
                 <th class="px-4 py-3">Fasilitas</th>
@@ -166,8 +156,8 @@
         <tbody class="divide-y">
             @forelse($checklist as $c)
             <tr class="hover:bg-gray-50 transition">
-                <td class="px-4 py-3 font-medium text-slate-900">{{ $c->user->name }}</td>
-                <td class="px-4 py-3 text-slate-700">{{ $c->facility->name }}</td>
+                <td class="px-4 py-3 font-medium text-gray-900">{{ $c->user->name }}</td>
+                <td class="px-4 py-3 text-gray-700">{{ $c->facility->name }}</td>
                 <td class="px-4 py-3">{{ date('d M Y H:i', strtotime($c->start_time)) }}</td>
                 <td class="px-4 py-3">{{ date('d M Y H:i', strtotime($c->end_time)) }}</td>
                 <td class="px-4 py-3 capitalize">
@@ -178,16 +168,16 @@
                 </td>
                 <td class="px-4 py-3 flex justify-center gap-2">
                     @if($c->status === 'active')
-                        <form action="{{ route('guru.bookings.complete', $c) }}" method="POST">
+                        <form action="{{ route('admin.bookings.complete', $c) }}" method="POST">
                             @csrf @method('PUT')
-                            <button class="px-3 py-1.5 rounded text-xs border text-slate-700 hover:bg-slate-50">Check-out</button>
+                            <button class="px-3 py-1.5 rounded text-xs border text-gray-700 hover:bg-gray-50">Check-out</button>
                         </form>
                     @endif
                 </td>
             </tr>
             @empty
             <tr>
-                <td colspan="6" class="text-center py-6 text-slate-500 text-sm">
+                <td colspan="6" class="text-center py-6 text-gray-500 text-sm">
                     Tidak ada booking approved/active.
                 </td>
             </tr>
@@ -195,5 +185,4 @@
         </tbody>
     </table>
 </div>
-
 @endsection

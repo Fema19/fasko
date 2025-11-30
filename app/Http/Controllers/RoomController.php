@@ -43,7 +43,7 @@ class RoomController extends Controller
     {
         $request->validate([
             'name'    => 'required',
-            'code'    => 'nullable',
+            'code'    => 'required',
             'user_id' => 'nullable|exists:users,id'
         ]);
 
@@ -69,7 +69,7 @@ class RoomController extends Controller
     {
         $request->validate([
             'name'    => 'required',
-            'code'    => 'nullable',
+            'code'    => 'required',
             'user_id' => 'nullable|exists:users,id'
         ]);
 

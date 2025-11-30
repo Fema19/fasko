@@ -60,8 +60,11 @@
         </p>
 
         <p class="mb-2">
-            <span class="font-semibold text-gray-600">Stok :</span>
-            <span class="text-gray-800">{{ $facility->stock ?? 'N/A' }}</span>
+            <span class="font-semibold text-gray-600">Ketersediaan ({{ $facility->availability_label === 'capacity' ? 'Kapasitas' : 'Unit' }}) :</span>
+            <span class="text-gray-800">{{ $facility->available_stock_now }} / {{ $facility->availability_limit }}</span>
+            @if($facility->in_use_now)
+                <span class="ml-2 px-2 py-1 text-xs rounded bg-red-100 text-red-700">Sedang dipakai</span>
+            @endif
         </p>
 
         {{-- DESKRIPSI --}}

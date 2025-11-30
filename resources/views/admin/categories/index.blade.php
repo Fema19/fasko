@@ -24,6 +24,7 @@
             <tr class="bg-gray-100 border-b">
                 <th class="px-4 py-3 text-left font-semibold text-gray-700">#</th>
                 <th class="px-4 py-3 text-left font-semibold text-gray-700">Nama Kategori</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700">Tipe</th>
                 <th class="px-4 py-3 text-center font-semibold text-gray-700">Aksi</th>
             </tr>
         </thead>
@@ -36,6 +37,10 @@
 
                     <td class="px-4 py-3 text-gray-900">
                         {{ $c->name }}
+                    </td>
+
+                    <td class="px-4 py-3 text-gray-700 capitalize">
+                        {{ $c->type ?? 'unit' }}
                     </td>
 
                     <td class="px-4 py-3 text-center space-x-1">
@@ -57,7 +62,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="3" class="py-6 text-center text-gray-500">
+                    <td colspan="4" class="py-6 text-center text-gray-500">
                         Belum ada kategori terdaftar
                     </td>
                 </tr>

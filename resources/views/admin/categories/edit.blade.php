@@ -18,8 +18,19 @@
                     value="{{ old('name', $category->name) }}" 
                     class="w-full border px-3 py-2 rounded @error('name') border-red-500 @enderror"
                 >
-                @error('name') 
-                    <p class="text-red-600 text-sm">{{ $message }}</p> 
+                @error('name')
+                    <p class="text-red-600 text-sm">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="mb-5">
+                <label class="block text-gray-700 font-semibold mb-1">Tipe</label>
+                <select name="type" class="w-full border px-3 py-2 rounded @error('type') border-red-500 @enderror">
+                    <option value="unit" {{ old('type', $category->type)==='unit'?'selected':'' }}>Unit (barang/perangkat)</option>
+                    <option value="capacity" {{ old('type', $category->type)==='capacity'?'selected':'' }}>Capacity (ruangan/lapangan)</option>
+                </select>
+                @error('type')
+                    <p class="text-red-600 text-sm">{{ $message }}</p>
                 @enderror
             </div>
 

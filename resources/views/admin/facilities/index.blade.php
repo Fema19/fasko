@@ -26,7 +26,7 @@
                     <th class="px-5 py-3 text-left">Ruangan</th>
                     <th class="px-5 py-3 text-left">Kondisi</th>
                     <th class="px-5 py-3 text-left">Kapasitas</th>
-                    <th class="px-5 py-3 text-left">Stok</th>
+                    <th class="px-5 py-3 text-left">Ketersediaan</th>
                     <th class="px-5 py-3 text-center">Aksi</th>
                 </tr>
             </thead>
@@ -66,7 +66,12 @@
                         {{ $f->capacity ?? '-' }}
                     </td>
                     <td class="px-5 py-3 text-gray-700">
-                        {{ $f->stock ?? 'N/A' }}
+                        <div class="flex items-center gap-2">
+                            <span>{{ $f->available_stock_now }} / {{ $f->availability_limit }} ({{ $f->availability_label === 'capacity' ? 'kapasitas' : 'unit' }})</span>
+                            @if($f->in_use_now)
+                                <span class="px-2 py-1 text-[11px] rounded bg-red-100 text-red-700">Sedang dipakai</span>
+                            @endif
+                        </div>
                     </td>
 
                     <td class="px-5 py-3">

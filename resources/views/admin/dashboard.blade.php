@@ -41,8 +41,8 @@
 
     <div class="bg-white p-5 rounded-xl border shadow-sm">
         <div class="flex items-center justify-between mb-3">
-            <p class="font-semibold text-gray-800">Stok Fasilitas (opsional)</p>
-            <span class="text-sm text-gray-500">Kapasitas / Stok</span>
+            <p class="font-semibold text-gray-800">Unit Fasilitas (opsional)</p>
+            <span class="text-sm text-gray-500">Kapasitas / Unit</span>
         </div>
         <div class="text-sm text-gray-600 space-y-1">
             <p>Gunakan daftar fasilitas untuk memantau kapasitas & stok per item.</p>

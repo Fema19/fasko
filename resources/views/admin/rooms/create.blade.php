@@ -19,9 +19,9 @@
 
         {{-- KODE --}}
         <div class="mb-5">
-            <label class="block font-semibold mb-2">Kode Ruangan (Opsional)</label>
+            <label class="block font-semibold mb-2">Kode Ruangan (Wajib)</label>
             <input type="text" name="code" value="{{ old('code') }}"
-                   class="w-full border px-3 py-2 rounded">
+                   class="w-full border px-3 py-2 rounded" required>
         </div>
 
         {{-- PILIH GURU --}}

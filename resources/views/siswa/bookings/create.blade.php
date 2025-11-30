@@ -81,7 +81,10 @@
 
                     <div class="flex flex-wrap gap-2 text-[11px] text-slate-600">
                         <span>Kapasitas: {{ $f->capacity ?? '-' }}</span>
-                        <span>Stok: {{ $f->stock ?? 'N/A' }}</span>
+                        <span>
+                            {{ $f->availability_label === 'capacity' ? 'Kapasitas tersedia sekarang' : 'Unit tersedia sekarang' }}:
+                            {{ $f->available_stock_now }} / {{ $f->availability_limit }}
+                        </span>
                     </div>
 
                     <p class="text-[11px] text-slate-600 line-clamp-3">
@@ -129,8 +132,9 @@
             </div>
 
             <div>
-                <label class="block text-sm text-slate-700 mb-1">Jumlah Pengguna</label>
+                <label class="block text-sm text-slate-700 mb-1">Unit yang dibutuhkan</label>
                 <input type="number" min="1" name="capacity_used" value="{{ old('capacity_used',1) }}" class="input-base" required>
+                <p class="text-[11px] text-slate-500 mt-1">Tidak boleh melebihi unit tersedia pada fasilitas.</p>
             </div>
 
             <div>

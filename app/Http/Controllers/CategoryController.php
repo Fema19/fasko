@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CategoryController extends Controller
 {
@@ -22,12 +23,15 @@ class CategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:100',
+            'type' => 'required|in:unit,capacity',
         ]);
 
-        Category::create($request->only('name'));
+        Category::create($request->only('name','type'));
+
+        $prefix = Auth::user()->role === 'guru' ? 'guru' : 'admin';
 
         return redirect()
-            ->route('admin.categories.index')   // ✔ route benar
+            ->route($prefix.'.categories.index')
             ->with('success', 'Kategori berhasil ditambahkan');
     }
 
@@ -40,12 +44,15 @@ class CategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:100',
+            'type' => 'required|in:unit,capacity',
         ]);
 
-        $category->update($request->only('name'));
+        $category->update($request->only('name','type'));
+
+        $prefix = Auth::user()->role === 'guru' ? 'guru' : 'admin';
 
         return redirect()
-            ->route('admin.categories.index')  // ✔ disesuaikan
+            ->route($prefix.'.categories.index')
             ->with('success', 'Kategori berhasil diperbarui');
     }
 
@@ -53,8 +60,10 @@ class CategoryController extends Controller
     {
         $category->delete();
 
+        $prefix = Auth::user()->role === 'guru' ? 'guru' : 'admin';
+
         return redirect()
-            ->route('admin.categories.index')  // ✔ back diganti agar konsisten
+            ->route($prefix.'.categories.index')
             ->with('success', 'Kategori berhasil dihapus');
     }
 }

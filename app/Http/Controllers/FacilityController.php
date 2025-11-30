@@ -88,7 +88,7 @@ class FacilityController extends Controller
             'description'=>'nullable|string',
             'photo'=>'nullable|image|max:2048',
             'capacity'=>'nullable|integer|min:1',
-            'stock'=>'nullable|integer|min:0',
+            'unit'=>'nullable|integer|min:0',
         ]);
 
         // Guru hanya boleh tambah fasilitas pada ruangannya sendiri
@@ -97,9 +97,16 @@ class FacilityController extends Controller
             $validated['room_id'] = $user->room_id; // paksa sesuai ruangan guru
         }
 
-        // kapasitas opsional -> default 1 jika tidak diisi
-        if (!isset($validated['capacity'])) {
-            $validated['capacity'] = 1;
+        $category = Category::find($validated['category_id']);
+        $categoryType = $category->type ?? 'unit';
+
+        if ($categoryType === 'unit') {
+            $validated['unit'] = $validated['unit'] ?? 1;
+            // kolom capacity di DB tidak nullable, set minimal 1 sebagai placeholder
+            $validated['capacity'] = $validated['capacity'] ?? 1;
+        } else {
+            $validated['capacity'] = $validated['capacity'] ?? 1;
+            $validated['unit'] = null;
         }
 
         if ($request->hasFile('photo'))
@@ -151,7 +158,7 @@ class FacilityController extends Controller
             'description'=>'nullable|string',
             'photo'=>'nullable|image|max:2048',
             'capacity'=>'nullable|integer|min:1',
-            'stock'=>'nullable|integer|min:0',
+            'unit'=>'nullable|integer|min:0',
         ]);
 
         if ($user->role==='guru') {
@@ -160,8 +167,16 @@ class FacilityController extends Controller
             $validated['room_id'] = $user->room_id;
         }
 
-        if (!isset($validated['capacity'])) {
-            $validated['capacity'] = 1;
+        $category = Category::find($validated['category_id']);
+        $categoryType = $category->type ?? 'unit';
+
+        if ($categoryType === 'unit') {
+            $validated['unit'] = $validated['unit'] ?? 1;
+            // kolom capacity tidak nullable, isi minimal 1
+            $validated['capacity'] = $validated['capacity'] ?? 1;
+        } else {
+            $validated['capacity'] = $validated['capacity'] ?? 1;
+            $validated['unit'] = null;
         }
 
         if ($request->hasFile('photo'))

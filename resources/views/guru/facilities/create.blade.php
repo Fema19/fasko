@@ -30,10 +30,10 @@
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
                     <label class="block mb-1 text-sm text-slate-700">Kategori</label>
-                    <select name="category_id" class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring focus:ring-slate-200" required>
+                    <select name="category_id" class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring focus:ring-slate-200" required id="categorySelect">
                         <option value="">-- Pilih Kategori --</option>
                         @foreach($categories as $c)
-                            <option value="{{ $c->id }}" {{ old('category_id')==$c->id ? 'selected' : '' }}>{{ $c->name }}</option>
+                            <option value="{{ $c->id }}" data-type="{{ $c->type ?? 'unit' }}" {{ old('category_id')==$c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                         @endforeach
                     </select>
                     @if($categories->isEmpty())
@@ -63,13 +63,13 @@
             </div>
 
             <div class="grid md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block mb-1 text-sm text-slate-700">Kapasitas (opsional)</label>
+                <div id="capacityField">
+                    <label class="block mb-1 text-sm text-slate-700">Kapasitas (wajib untuk kategori capacity)</label>
                     <input type="number" name="capacity" min="1" value="{{ old('capacity') }}" class="w-full border px-3 py-2 rounded text-sm focus:outline-none focus:ring focus:ring-slate-200">
                 </div>
-                <div>
-                    <label class="block mb-1 text-sm text-slate-700">Stok (opsional)</label>
-                    <input type="number" name="stock" min="0" value="{{ old('stock') }}" class="w-full border px-3 py-2 rounded text-sm focus:outline-none focus:ring focus:ring-slate-200">
+                <div id="unitField">
+                    <label class="block mb-1 text-sm text-slate-700">Unit (wajib untuk kategori unit)</label>
+                    <input type="number" name="unit" min="0" value="{{ old('unit') }}" class="w-full border px-3 py-2 rounded text-sm focus:outline-none focus:ring focus:ring-slate-200">
                 </div>
             </div>
 
@@ -84,4 +84,26 @@
         </form>
     </div>
 </div>
+<script>
+    function toggleFields() {
+        const select = document.getElementById('categorySelect');
+        const type = select?.options[select.selectedIndex]?.dataset.type || 'unit';
+        const capacityField = document.getElementById('capacityField');
+        const unitField = document.getElementById('unitField');
+        if (type === 'capacity') {
+            capacityField.style.display = 'block';
+            unitField.style.display = 'none';
+        } else {
+            capacityField.style.display = 'none';
+            unitField.style.display = 'block';
+        }
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        const select = document.getElementById('categorySelect');
+        if (select) {
+            select.addEventListener('change', toggleFields);
+            toggleFields();
+        }
+    });
+</script>
 @endsection

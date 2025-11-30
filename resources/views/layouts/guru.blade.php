@@ -22,6 +22,7 @@
                 @if(Auth::user()->room_id)
                     <a href="{{ route('guru.bookings.requests') }}" class="hover:text-slate-900">Request</a>
                     <a href="{{ route('guru.facilities.index') }}" class="hover:text-slate-900">Fasilitas</a>
+                    <a href="{{ route('guru.categories.index') }}" class="hover:text-slate-900">Kategori</a>
                 @endif
                 <a href="{{ route('guru.reports.index') }}" class="hover:text-slate-900">Laporan</a>
             </nav>

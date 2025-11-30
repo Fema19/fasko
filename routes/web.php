@@ -90,9 +90,11 @@ Route::middleware(['auth','role:admin'])
         Route::get('/bookings/requests', [BookingController::class,'requests'])->name('bookings.requests');
         Route::get('/bookings/history',  [BookingController::class,'history'])->name('bookings.history');
         Route::get('/bookings/{booking}',[BookingController::class,'show'])->name('bookings.show');
+        Route::delete('/bookings/history/reset', [BookingController::class,'resetHistory'])->name('bookings.history.reset');
 
         Route::put('/bookings/{booking}/approve',  [BookingController::class,'approve'])->name('bookings.approve');
         Route::put('/bookings/{booking}/reject',   [BookingController::class,'reject'])->name('bookings.reject');
+        Route::put('/bookings/{booking}/check-in', [BookingController::class,'checkIn'])->name('bookings.checkin');
         Route::put('/bookings/{booking}/complete', [BookingController::class,'complete'])->name('bookings.complete');
         
         // Admin pantau & ubah status laporan
@@ -115,11 +117,13 @@ Route::middleware(['auth','role:guru'])
 
         // Route khusus penanggung jawab ruangan (diletakkan sebelum resource agar tidak tertabrak oleh /bookings/{booking})
         Route::middleware('check.room.owner')->group(function (){
-            Route::get('/bookings/requests', [BookingController::class,'requests'])->name('bookings.requests');
-            Route::put('/bookings/{booking}/approve',  [BookingController::class,'approve'])->name('bookings.approve');
-            Route::put('/bookings/{booking}/reject',   [BookingController::class,'reject'])->name('bookings.reject');
-            Route::put('/bookings/{booking}/complete', [BookingController::class,'complete'])->name('bookings.complete');
-        });
+        Route::get('/bookings/requests', [BookingController::class,'requests'])->name('bookings.requests');
+        Route::delete('/bookings/history/reset', [BookingController::class,'resetHistory'])->name('bookings.history.reset');
+        Route::put('/bookings/{booking}/approve',  [BookingController::class,'approve'])->name('bookings.approve');
+        Route::put('/bookings/{booking}/reject',   [BookingController::class,'reject'])->name('bookings.reject');
+        Route::put('/bookings/{booking}/complete', [BookingController::class,'complete'])->name('bookings.complete');
+        Route::resource('categories', CategoryController::class)->except(['show']);
+    });
 
         // Guru level normal => booking seperti siswa
         Route::resource('bookings', BookingController::class);
@@ -127,6 +131,9 @@ Route::middleware(['auth','role:guru'])
         Route::resource('facilities', FacilityController::class);
         Route::resource('reports', RepairReportController::class);
         Route::put('/reports/{report}/status', [RepairReportController::class,'updateStatus'])->name('reports.status');
+
+        // Check-in pemilik booking (guru biasa)
+        Route::put('/bookings/{booking}/check-in', [BookingController::class,'checkIn'])->name('bookings.checkin');
     });
 
 
@@ -149,4 +156,7 @@ Route::middleware(['auth','role:siswa'])
         Route::resource('bookings', BookingController::class);
         Route::resource('reports', RepairReportController::class);
         Route::get('/facilities', [FacilityController::class,'index'])->name('facilities.index');
+
+        // Check-in pemilik booking (siswa)
+        Route::put('/bookings/{booking}/check-in', [BookingController::class,'checkIn'])->name('bookings.checkin');
     });

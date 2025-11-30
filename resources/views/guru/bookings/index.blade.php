@@ -16,6 +16,11 @@
         {{ session('success') }}
     </div>
 @endif
+@if(session('error'))
+    <div class="bg-red-50 border border-red-200 text-red-800 px-3 py-2 mb-4 rounded text-sm">
+        {{ session('error') }}
+    </div>
+@endif
 
 <div class="bg-white border rounded-lg overflow-hidden">
     <table class="w-full text-sm">
@@ -34,7 +39,7 @@
                 <td class="p-3 text-slate-700">{{ date('d M Y H:i', strtotime($b->start_time)) }}</td>
                 <td class="p-3 text-slate-700">{{ date('d M Y H:i', strtotime($b->end_time)) }}</td>
                 <td class="p-3">
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 flex-wrap">
                         <span class="px-2 py-1 text-[11px] rounded-full border text-slate-700">
                             {{ ucfirst($b->status) }}
                         </span>
@@ -44,6 +49,15 @@
                             @method('DELETE')
                             <button class="text-[11px] px-2 py-1 rounded border text-red-700 hover:bg-red-50">Batalkan</button>
                         </form>
+                        @endif
+                        @if($b->status === 'approved' && !$b->checked_in)
+                        <form action="{{ route('guru.bookings.checkin', $b) }}" method="POST">
+                            @csrf
+                            @method('PUT')
+                            <button class="text-[11px] px-2 py-1 rounded border text-slate-700 hover:bg-slate-50">Check-in</button>
+                        </form>
+                        @elseif($b->checked_in)
+                            <span class="text-[11px] px-2 py-1 rounded border border-green-600 text-green-700 bg-green-50">IN</span>
                         @endif
                     </div>
                 </td>

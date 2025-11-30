@@ -23,7 +23,7 @@
             <label class="block font-semibold mb-2">Kode Ruangan</label>
             <input type="text" name="code"
                    value="{{ old('code', $room->code) }}"
-                   class="w-full border px-3 py-2 rounded">
+                   class="w-full border px-3 py-2 rounded" required>
         </div>
 
         {{-- GURU --}}

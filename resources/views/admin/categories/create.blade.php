@@ -22,6 +22,17 @@
                 @enderror
             </div>
 
+            <div class="mb-5">
+                <label class="block text-gray-700 font-semibold mb-1">Tipe</label>
+                <select name="type" class="w-full border px-3 py-2 rounded @error('type') border-red-500 @enderror">
+                    <option value="unit" {{ old('type')==='unit'?'selected':'' }}>Unit (barang/perangkat)</option>
+                    <option value="capacity" {{ old('type')==='capacity'?'selected':'' }}>Capacity (ruangan/lapangan)</option>
+                </select>
+                @error('type')
+                    <p class="text-red-600 text-sm">{{ $message }}</p>
+                @enderror
+            </div>
+
             <div class="flex gap-2">
                 <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
                     Simpan

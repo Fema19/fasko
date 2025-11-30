@@ -16,9 +16,9 @@
 
             <div class="mb-4">
                 <label class="font-semibold">Kategori</label>
-                <select name="category_id" class="w-full border px-3 py-2 rounded">
+                <select name="category_id" class="w-full border px-3 py-2 rounded" id="categorySelect">
                     @foreach($categories as $c)
-                        <option value="{{ $c->id }}" {{ $facility->category_id==$c->id?'selected':'' }}>
+                        <option value="{{ $c->id }}" data-type="{{ $c->type ?? 'unit' }}" {{ $facility->category_id==$c->id?'selected':'' }}>
                             {{ $c->name }}
                         </option>
                     @endforeach
@@ -64,13 +64,13 @@
             </div>
 
             <div class="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="font-semibold">Kapasitas (opsional)</label>
+                <div id="capacityField">
+                    <label class="font-semibold">Kapasitas (wajib untuk kategori capacity)</label>
                     <input type="number" name="capacity" min="1" class="w-full border px-3 py-2 rounded" value="{{ old('capacity', $facility->capacity) }}">
                 </div>
-                <div>
-                    <label class="font-semibold">Stok (opsional)</label>
-                    <input type="number" name="stock" min="0" class="w-full border px-3 py-2 rounded" value="{{ old('stock', $facility->stock) }}">
+                <div id="unitField">
+                    <label class="font-semibold">Unit (wajib untuk kategori unit)</label>
+                    <input type="number" name="unit" min="0" class="w-full border px-3 py-2 rounded" value="{{ old('unit', $facility->unit) }}">
                 </div>
             </div>
 
@@ -86,4 +86,26 @@
     </div>
 </div>
 
+<script>
+    function toggleFields() {
+        const select = document.getElementById('categorySelect');
+        const type = select?.options[select.selectedIndex]?.dataset.type || 'unit';
+        const capacityField = document.getElementById('capacityField');
+        const unitField = document.getElementById('unitField');
+        if (type === 'capacity') {
+            capacityField.style.display = 'block';
+            unitField.style.display = 'none';
+        } else {
+            capacityField.style.display = 'none';
+            unitField.style.display = 'block';
+        }
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        const select = document.getElementById('categorySelect');
+        if (select) {
+            select.addEventListener('change', toggleFields);
+            toggleFields();
+        }
+    });
+</script>
 @endsection

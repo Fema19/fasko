@@ -19,7 +19,14 @@ class Booking extends Model
         'checked_in',
     ];
 
-    protected $dates = ['start_time', 'end_time', 'check_in_time'];
+    protected $casts = [
+        'start_time' => 'datetime',
+        'end_time' => 'datetime',
+        'check_in_time' => 'datetime',
+        'check_out_time' => 'datetime',
+        'checked_in' => 'boolean',
+        'checked_out' => 'boolean',
+    ];
 
     public function user()
     {
