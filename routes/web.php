@@ -89,6 +89,7 @@ Route::middleware(['auth','role:admin'])
         // Booking (Admin full access)
         Route::get('/bookings/requests', [BookingController::class,'requests'])->name('bookings.requests');
         Route::get('/bookings/history',  [BookingController::class,'history'])->name('bookings.history');
+        Route::get('/bookings/history/export', [BookingController::class,'exportHistory'])->name('bookings.history.export');
         Route::get('/bookings/{booking}',[BookingController::class,'show'])->name('bookings.show');
         Route::delete('/bookings/history/reset', [BookingController::class,'resetHistory'])->name('bookings.history.reset');
 
@@ -98,6 +99,8 @@ Route::middleware(['auth','role:admin'])
         Route::put('/bookings/{booking}/complete', [BookingController::class,'complete'])->name('bookings.complete');
         
         // Admin pantau & ubah status laporan
+        Route::get('/repair-reports/export', [RepairReportController::class,'export'])->name('repair-reports.export');
+        Route::delete('/repair-reports/reset', [RepairReportController::class,'reset'])->name('repair-reports.reset');
         Route::resource('repair-reports', RepairReportController::class)->only(['index']);
         Route::put('/repair-reports/{report}/status', [RepairReportController::class,'updateStatus'])->name('repair-reports.status');
     });
@@ -118,6 +121,8 @@ Route::middleware(['auth','role:guru'])
         // Route khusus penanggung jawab ruangan (diletakkan sebelum resource agar tidak tertabrak oleh /bookings/{booking})
         Route::middleware('check.room.owner')->group(function (){
         Route::get('/bookings/requests', [BookingController::class,'requests'])->name('bookings.requests');
+        Route::get('/bookings/history',  [BookingController::class,'history'])->name('bookings.history');
+        Route::get('/bookings/history/export', [BookingController::class,'exportHistory'])->name('bookings.history.export');
         Route::delete('/bookings/history/reset', [BookingController::class,'resetHistory'])->name('bookings.history.reset');
         Route::put('/bookings/{booking}/approve',  [BookingController::class,'approve'])->name('bookings.approve');
         Route::put('/bookings/{booking}/reject',   [BookingController::class,'reject'])->name('bookings.reject');
@@ -129,6 +134,8 @@ Route::middleware(['auth','role:guru'])
         Route::resource('bookings', BookingController::class);
 
         Route::resource('facilities', FacilityController::class);
+        Route::get('/reports/export', [RepairReportController::class,'export'])->name('reports.export');
+        Route::delete('/reports/reset', [RepairReportController::class,'reset'])->name('reports.reset');
         Route::resource('reports', RepairReportController::class);
         Route::put('/reports/{report}/status', [RepairReportController::class,'updateStatus'])->name('reports.status');
 

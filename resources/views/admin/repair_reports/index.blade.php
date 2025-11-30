@@ -7,6 +7,14 @@
         <h1 class="text-2xl font-bold text-gray-900">Laporan Kerusakan</h1>
         <p class="text-sm text-gray-500">Pantau dan kelola laporan kerusakan fasilitas.</p>
     </div>
+    <div class="flex gap-2">
+        <a href="{{ route('admin.repair-reports.export') }}" class="px-3 py-2 bg-gray-900 text-white rounded text-xs">Export PDF</a>
+        <form action="{{ route('admin.repair-reports.reset') }}" method="POST" class="js-reset-reports">
+            @csrf
+            @method('DELETE')
+            <button class="px-3 py-2 border text-xs text-red-700 rounded hover:bg-red-50">Reset Laporan</button>
+        </form>
+    </div>
 </div>
 
 @if(session('success'))
@@ -72,3 +80,29 @@
     </table>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.js-reset-reports').forEach(form => {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Reset semua laporan?',
+                text: 'Semua laporan dalam cakupan Anda akan dihapus.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Ya, hapus'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+});
+</script>
+@endpush

@@ -21,6 +21,7 @@
                 <a href="{{ route('guru.bookings.index') }}" class="hover:text-slate-900">Booking</a>
                 @if(Auth::user()->room_id)
                     <a href="{{ route('guru.bookings.requests') }}" class="hover:text-slate-900">Request</a>
+                    <a href="{{ route('guru.bookings.history') }}" class="hover:text-slate-900">History</a>
                     <a href="{{ route('guru.facilities.index') }}" class="hover:text-slate-900">Fasilitas</a>
                     <a href="{{ route('guru.categories.index') }}" class="hover:text-slate-900">Kategori</a>
                 @endif
@@ -41,5 +42,7 @@
     <main class="max-w-5xl mx-auto px-4 py-8">
         @yield('content')
     </main>
+
+    @stack('scripts')
 </body>
 </html>

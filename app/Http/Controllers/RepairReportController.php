@@ -6,6 +6,7 @@ use App\Models\Facility;
 use App\Models\RepairReport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class RepairReportController extends Controller
 {
@@ -13,25 +14,12 @@ class RepairReportController extends Controller
     {
         $user = Auth::user();
 
-        $query = RepairReport::with(['facility.room', 'user'])->latest();
+        // Auto-reset laporan lama untuk siswa / guru non-PJ
+        $this->cleanupUserReports($user);
 
-        if ($user->role === 'admin') {
-            // admin melihat semua
-        } elseif ($user->role === 'guru') {
-            // guru PJ melihat laporan di ruangannya; jika tidak punya ruangan, tampilkan laporan yang ia kirim
-            if ($user->room_id) {
-                $query->whereHas('facility', function($q) use ($user){
-                    $q->where('room_id', $user->room_id);
-                });
-            } else {
-                $query->where('user_id', $user->id);
-            }
-        } else {
-            // siswa atau role lain hanya melihat laporan yang ia buat
-            $query->where('user_id', $user->id);
-        }
+        $query = $this->buildScopedQuery($user);
 
-        $reports = $query->get();
+        $reports = $query->latest()->get();
 
         return $this->view('repair_reports.index', compact('reports'));
     }
@@ -103,5 +91,74 @@ class RepairReportController extends Controller
         ]);
 
         return back()->with('success', 'Status laporan diperbarui.');
+    }
+
+    public function export()
+    {
+        $user = Auth::user();
+
+        if ($user->role === 'guru' && ! $user->room_id) {
+            abort(403,'Export hanya untuk admin atau guru penanggung jawab ruangan.');
+        }
+
+        $query = $this->buildScopedQuery($user);
+        $reports = $query->latest()->get();
+
+        $pdf = Pdf::loadView('repair_reports.pdf', [
+            'reports' => $reports,
+            'user' => $user,
+        ]);
+
+        return $pdf->download('laporan-kerusakan-'.now()->format('Ymd_His').'.pdf');
+    }
+
+    public function reset()
+    {
+        $user = Auth::user();
+
+        if ($user->role === 'admin') {
+            $deleted = RepairReport::query()->delete();
+        } elseif ($user->role === 'guru' && $user->room_id) {
+            $deleted = RepairReport::whereHas('facility', function($q) use ($user){
+                $q->where('room_id', $user->room_id);
+            })->delete();
+        } else {
+            abort(403,'Tidak boleh reset laporan.');
+        }
+
+        return back()->with('success', "Laporan direset ($deleted entri).");
+    }
+
+    private function buildScopedQuery($user)
+    {
+        $query = RepairReport::with(['facility.room', 'user']);
+
+        if ($user->role === 'admin') {
+            return $query;
+        }
+
+        if ($user->role === 'guru') {
+            if ($user->room_id) {
+                return $query->whereHas('facility', function($q) use ($user){
+                    $q->where('room_id', $user->room_id);
+                });
+            }
+
+            return $query->where('user_id', $user->id);
+        }
+
+        return $query->where('user_id', $user->id);
+    }
+
+    /**
+     * Hapus laporan lebih dari 7 hari (siswa & guru non-PJ).
+     */
+    private function cleanupUserReports($user): void
+    {
+        if ($user->role === 'siswa' || ($user->role === 'guru' && ! $user->room_id)) {
+            RepairReport::where('user_id', $user->id)
+                ->where('created_at','<=', now()->subDays(7))
+                ->delete();
+        }
     }
 }

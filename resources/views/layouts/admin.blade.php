@@ -61,6 +61,11 @@
             </a>
 
 
+            <a href="{{ route('admin.bookings.history') }}"
+               class="block px-6 py-3 hover:bg-gray-800 transition">
+               History Booking
+            </a>
+
             <!-- 🔥 LOGOUT (METHOD POST WAJIB) -->
             <form action="{{ route('logout') }}" method="POST">
                 @csrf
@@ -93,5 +98,7 @@
 
     </div>
 
+    @stack('scripts')
 </body>
 </html>
+

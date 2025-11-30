@@ -8,6 +8,7 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class BookingController extends Controller
 {
@@ -16,6 +17,11 @@ class BookingController extends Controller
     ============================================================*/
     public function index()
     {
+        $user = Auth::user();
+
+        // Auto-reset riwayat untuk siswa/guru non-PJ (hapus booking lampau milik sendiri)
+        $this->cleanupUserHistory($user);
+
         $bookings = Booking::with(['facility','user'])
             ->where('user_id', Auth::id())
             ->where(function($q){
@@ -25,7 +31,7 @@ class BookingController extends Controller
             ->latest()
             ->get();
 
-        $view = Auth::user()->role === 'guru'
+        $view = $user->role === 'guru'
             ? 'guru.bookings.index'
             : 'siswa.bookings.index';
 
@@ -134,17 +140,6 @@ class BookingController extends Controller
             ->whereIn('status',['approved','active'])
             ->latest();
 
-        $historyQuery = Booking::with(['user','facility'])
-            ->where('status','!=','pending')
-            ->latest();
-
-        // FILTER BY DATE
-        if ($request->date) {
-            $query->whereDate('start_time', $request->date);
-            $historyQuery->whereDate('start_time', $request->date);
-            $checklist->whereDate('start_time', $request->date);
-        }
-
         // Guru hanya melihat request fasilitas dari ruangan yang ia tangani
         if ($user->role === 'guru') {
             if (! $user->room_id) {
@@ -155,17 +150,12 @@ class BookingController extends Controller
                 $q->where('room_id', $user->room_id);
             });
 
-            $historyQuery->whereHas('facility', function($q) use ($user){
-                $q->where('room_id', $user->room_id);
-            });
-
             $checklist->whereHas('facility', function($q) use ($user){
                 $q->where('room_id', $user->room_id);
             });
 
             return view('guru.bookings.requests', [
                 'bookings'=>$query->get(),
-                'history'=>$historyQuery->limit(10)->get(),
                 'checklist'=>$checklist->get(),
             ]);
         }
@@ -173,7 +163,6 @@ class BookingController extends Controller
         // Admin melihat semua
         return view('admin.bookings.requests',[
             'bookings'=>$query->get(),
-            'history'=>$historyQuery->limit(10)->get(),
             'checklist'=>$checklist->get(),
         ]);
     }
@@ -321,11 +310,110 @@ class BookingController extends Controller
     /* ============================================================
        10. HISTORY ADMIN (FULL DATA)
     ============================================================*/
-    public function history()
+    public function history(Request $request)
     {
-        return view('admin.bookings.history',[
-            'bookings'=>Booking::with(['user','facility'])->latest()->get()
+        $user = Auth::user();
+
+        $filters = [
+            'status' => $request->get('status'),
+            'date'   => $request->get('date'),
+            'q'      => $request->get('q'),
+        ];
+
+        $query = Booking::with(['user','facility.room'])
+            ->whereIn('status', ['approved','active','completed','cancelled','rejected'])
+            ->latest('start_time');
+
+        if ($filters['status']) {
+            $query->where('status', $filters['status']);
+        }
+
+        if ($filters['date']) {
+            $query->whereDate('start_time', $filters['date']);
+        }
+
+        if ($filters['q']) {
+            $query->where(function($q) use ($filters){
+                $q->whereHas('user', function($u) use ($filters){
+                    $u->where('name','like','%'.$filters['q'].'%');
+                })->orWhereHas('facility', function($f) use ($filters){
+                    $f->where('name','like','%'.$filters['q'].'%');
+                })->orWhere('reason','like','%'.$filters['q'].'%');
+            });
+        }
+
+        if ($user->role === 'guru') {
+            if (! $user->room_id) {
+                abort(403,'Anda tidak terdaftar sebagai penanggung jawab ruangan');
+            }
+
+            $query->whereHas('facility', function($q) use ($user){
+                $q->where('room_id', $user->room_id);
+            });
+
+            $view = 'guru.bookings.history';
+        } else {
+            $view = 'admin.bookings.history';
+        }
+
+        $bookings = $query->paginate(15)->withQueryString();
+
+        return view($view, compact('bookings','filters'));
+    }
+
+    public function exportHistory(Request $request)
+    {
+        $user = Auth::user();
+
+        $filters = [
+            'status' => $request->get('status'),
+            'date'   => $request->get('date'),
+            'q'      => $request->get('q'),
+        ];
+
+        $query = Booking::with(['user','facility.room'])
+            ->whereIn('status', ['approved','active','completed','cancelled','rejected'])
+            ->latest('start_time');
+
+        if ($filters['status']) {
+            $query->where('status', $filters['status']);
+        }
+
+        if ($filters['date']) {
+            $query->whereDate('start_time', $filters['date']);
+        }
+
+        if ($filters['q']) {
+            $query->where(function($q) use ($filters){
+                $q->whereHas('user', function($u) use ($filters){
+                    $u->where('name','like','%'.$filters['q'].'%');
+                })->orWhereHas('facility', function($f) use ($filters){
+                    $f->where('name','like','%'.$filters['q'].'%');
+                })->orWhere('reason','like','%'.$filters['q'].'%');
+            });
+        }
+
+        if ($user->role === 'guru') {
+            if (! $user->room_id) {
+                abort(403,'Anda tidak terdaftar sebagai penanggung jawab ruangan');
+            }
+
+            $query->whereHas('facility', function($q) use ($user){
+                $q->where('room_id', $user->room_id);
+            });
+        }
+
+        $bookings = $query->get();
+
+        $pdf = Pdf::loadView('bookings.history-pdf', [
+            'bookings' => $bookings,
+            'filters'  => $filters,
+            'user'     => $user,
         ]);
+
+        $filename = 'history-booking-'.now()->format('Ymd_His').'.pdf';
+
+        return $pdf->download($filename);
     }
 
     /* ============================================================
@@ -433,5 +521,20 @@ class BookingController extends Controller
         $deleted = $query->delete();
 
         return back()->with('success', "History dibersihkan ($deleted entri)");
+    }
+
+    /**
+     * Hapus otomatis riwayat yang sudah lewat (dipanggil sebelum menampilkan history).
+     */
+    private function cleanupUserHistory($user): void
+    {
+        // Hanya untuk siswa atau guru non-PJ (room_id null)
+        if ($user->role === 'siswa' || ($user->role === 'guru' && ! $user->room_id)) {
+            Booking::where('user_id', $user->id)
+                ->where('status','!=','pending')
+                ->whereNotNull('end_time')
+                ->where('end_time','<=', now()->subDays(2))
+                ->delete();
+        }
     }
 }
