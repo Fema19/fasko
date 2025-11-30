@@ -26,9 +26,9 @@ Laravel is accessible, powerful, and provides tools required for large, robust a
 ```mermaid
 erDiagram
     USERS ||--o{ BOOKINGS : membuat
-    USERS ||--o{ ROOMS : PJ
+    USERS ||--o{ ROOMS : pj
     ROOMS ||--o{ FACILITIES : memiliki
-    CATEGORIES ||--o{ FACILITIES : mengelompokkan
+    CATEGORIES ||--o{ FACILITIES : kelompok
     FACILITIES ||--o{ BOOKINGS : dipesan
     FACILITIES ||--o{ REPAIR_REPORTS : dilaporkan
     USERS ||--o{ REPAIR_REPORTS : melapor
@@ -39,39 +39,39 @@ erDiagram
         int id
         string name
         string email
-        enum role       // admin|guru|siswa
-        int room_id FK  // hanya guru PJ
+        enum role
+        int room_id
     }
     ROOMS {
         int id
         string name
         string code
-        int user_id FK  // guru PJ
+        int user_id
     }
     CATEGORIES {
         int id
         string name
-        string type     // unit|capacity
+        string type
     }
     FACILITIES {
         int id
         string name
-        int room_id FK
-        int category_id FK
+        int room_id
+        int category_id
         int capacity
         int unit
         enum condition
     }
     BOOKINGS {
         int id
-        int user_id FK
-        int facility_id FK
+        int user_id
+        int facility_id
         datetime start_time
         datetime end_time
         string reason
         int capacity_used
-        enum status          // pending|approved|rejected|active|completed|cancelled
-        int approved_by FK
+        enum status
+        int approved_by
         datetime check_in_time
         bool checked_in
         datetime check_out_time
@@ -79,14 +79,14 @@ erDiagram
     }
     REPAIR_REPORTS {
         int id
-        int user_id FK
-        int facility_id FK
+        int user_id
+        int facility_id
         string description
         enum status
     }
     MESSAGES {
         int id
-        int user_id FK
+        int user_id
         string subject
         text body
     }
@@ -96,18 +96,18 @@ erDiagram
 
 ```mermaid
 flowchart TD
-    A[User (siswa/guru non-PJ)] -->|Buat booking| B[Booking pending]
+    A[User\n(siswa/guru non-PJ)] -->|Buat booking| B[Booking pending]
     Admin[Admin / Guru PJ] -->|Approve| C[Booking approved]
     Admin -->|Reject| Rj[Booking rejected]
     C -->|Window -30 s/d -25 menit| W{Check-in?}
     Scheduler[Schedule auto-cancel] --> W
-    W -- Ya --> D[Check-in -> status active, checked_in=true]
-    W -- Tidak lewat window --> X[Auto-cancel]
+    W -- Ya --> D[Check-in\nstatus=active\nchecked_in=true]
+    W -- Lewat window --> X[Auto-cancel]
     D -->|Menunggu end_time| E{Waktu selesai?}
     E -- Belum --> D
-    E -- Sudah --> F[Check-out (Admin/Guru PJ)\nstatus completed, checked_out=true]
+    E -- Sudah --> F[Check-out\n(Admin/Guru PJ)\nstatus=completed\nchecked_out=true]
     F --> Done[Booking selesai]
-    note right of Scheduler: Perintah bookings:cancel-late-checkins tiap menit
+    note right of Scheduler: Command bookings:cancel-late-checkins\njalan tiap menit
 ```
 
 ## Learning Laravel
