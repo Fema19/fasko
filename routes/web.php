@@ -4,6 +4,8 @@ use App\Http\Controllers\{
     BookingController, CategoryController, FacilityController,
     MessageController, RepairReportController, RoomController, UserController
 };
+use App\Http\Controllers\Admin\BookingController as AdminBookingController;
+use App\Http\Controllers\Guru\BookingController as GuruBookingController;
 use App\Models\Booking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -87,16 +89,15 @@ Route::middleware(['auth','role:admin'])
         Route::resource('facilities', FacilityController::class);
 
         // Booking (Admin full access)
-        Route::get('/bookings/requests', [BookingController::class,'requests'])->name('bookings.requests');
-        Route::get('/bookings/history',  [BookingController::class,'history'])->name('bookings.history');
-        Route::get('/bookings/history/export', [BookingController::class,'exportHistory'])->name('bookings.history.export');
-        Route::get('/bookings/{booking}',[BookingController::class,'show'])->name('bookings.show');
-        Route::delete('/bookings/history/reset', [BookingController::class,'resetHistory'])->name('bookings.history.reset');
+        Route::get('/bookings/requests', [AdminBookingController::class,'requests'])->name('bookings.requests');
+        Route::get('/bookings/history',  [AdminBookingController::class,'history'])->name('bookings.history');
+        Route::get('/bookings/history/export', [AdminBookingController::class,'exportHistory'])->name('bookings.history.export');
+        Route::get('/bookings/{booking}',[AdminBookingController::class,'show'])->name('bookings.show');
+        Route::delete('/bookings/history/reset', [AdminBookingController::class,'resetHistory'])->name('bookings.history.reset');
 
-        Route::put('/bookings/{booking}/approve',  [BookingController::class,'approve'])->name('bookings.approve');
-        Route::put('/bookings/{booking}/reject',   [BookingController::class,'reject'])->name('bookings.reject');
-        Route::put('/bookings/{booking}/check-in', [BookingController::class,'checkIn'])->name('bookings.checkin');
-        Route::put('/bookings/{booking}/complete', [BookingController::class,'complete'])->name('bookings.complete');
+        Route::put('/bookings/{booking}/approve',  [AdminBookingController::class,'approve'])->name('bookings.approve');
+        Route::put('/bookings/{booking}/reject',   [AdminBookingController::class,'reject'])->name('bookings.reject');
+        Route::put('/bookings/{booking}/complete', [AdminBookingController::class,'complete'])->name('bookings.complete');
         
         // Admin pantau & ubah status laporan
         Route::get('/repair-reports/export', [RepairReportController::class,'export'])->name('repair-reports.export');
@@ -120,15 +121,15 @@ Route::middleware(['auth','role:guru'])
 
         // Route khusus penanggung jawab ruangan (diletakkan sebelum resource agar tidak tertabrak oleh /bookings/{booking})
         Route::middleware('check.room.owner')->group(function (){
-        Route::get('/bookings/requests', [BookingController::class,'requests'])->name('bookings.requests');
-        Route::get('/bookings/history',  [BookingController::class,'history'])->name('bookings.history');
-        Route::get('/bookings/history/export', [BookingController::class,'exportHistory'])->name('bookings.history.export');
-        Route::delete('/bookings/history/reset', [BookingController::class,'resetHistory'])->name('bookings.history.reset');
-        Route::put('/bookings/{booking}/approve',  [BookingController::class,'approve'])->name('bookings.approve');
-        Route::put('/bookings/{booking}/reject',   [BookingController::class,'reject'])->name('bookings.reject');
-        Route::put('/bookings/{booking}/complete', [BookingController::class,'complete'])->name('bookings.complete');
-        Route::resource('categories', CategoryController::class)->except(['show']);
-    });
+            Route::get('/bookings/requests', [GuruBookingController::class,'requests'])->name('bookings.requests');
+            Route::get('/bookings/history',  [GuruBookingController::class,'history'])->name('bookings.history');
+            Route::get('/bookings/history/export', [GuruBookingController::class,'exportHistory'])->name('bookings.history.export');
+            Route::delete('/bookings/history/reset', [GuruBookingController::class,'resetHistory'])->name('bookings.history.reset');
+            Route::put('/bookings/{booking}/approve',  [GuruBookingController::class,'approve'])->name('bookings.approve');
+            Route::put('/bookings/{booking}/reject',   [GuruBookingController::class,'reject'])->name('bookings.reject');
+            Route::put('/bookings/{booking}/complete', [GuruBookingController::class,'complete'])->name('bookings.complete');
+            Route::resource('categories', CategoryController::class)->except(['show']);
+        });
 
         // Guru level normal => booking seperti siswa
         Route::resource('bookings', BookingController::class);

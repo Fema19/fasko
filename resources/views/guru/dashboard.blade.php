@@ -2,71 +2,81 @@
 @section('page_title','Dashboard Guru')
 
 @section('content')
-<div class="flex items-start justify-between mb-6">
-    <div>
-        <p class="text-xs text-slate-500">Halo, {{ Auth::user()->name }}</p>
-        <h1 class="text-2xl font-semibold text-slate-900">Dashboard Guru</h1>
-    </div>
-    <div class="flex gap-2">
-        <a href="{{ route('guru.bookings.create') }}" class="px-3 py-2 bg-slate-900 text-white rounded-md text-xs">Buat Booking</a>
-        @if(Auth::user()->room_id)
-            <a href="{{ route('guru.bookings.requests') }}" class="px-3 py-2 bg-slate-100 text-slate-800 rounded-md text-xs border">Request</a>
-        @endif
+<div class="card card-padding mb-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="space-y-1">
+            <p class="text-xs text-slate-500">Halo, {{ Auth::user()->name }}</p>
+            <h1 class="text-2xl font-semibold text-slate-900">Dashboard Guru</h1>
+            <p class="text-sm muted">
+                Kelola booking Anda {{ Auth::user()->room_id ? 'dan ruangan yang Anda tangani' : 'dengan cepat' }}.
+            </p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('guru.bookings.create') }}" class="btn-dark">+ Booking</a>
+            @if(Auth::user()->room_id)
+                <a href="{{ route('guru.bookings.requests') }}" class="btn-ghost">Request Masuk</a>
+            @endif
+        </div>
     </div>
 </div>
 
 <div class="grid gap-4 md:grid-cols-3 mb-6">
-    <div class="p-4 bg-white border rounded-lg">
-        <p class="text-xs text-slate-500">Peran</p>
+    <div class="card card-padding space-y-2">
+        <p class="text-xs muted">Peran</p>
         <p class="text-lg font-semibold text-slate-900">Guru</p>
+        <span class="pill">{{ Auth::user()->room_id ? 'Penanggung jawab ruangan' : 'Guru (pemohon)' }}</span>
     </div>
-    <div class="p-4 bg-white border rounded-lg">
-        <p class="text-xs text-slate-500">Ruangan</p>
+    <div class="card card-padding space-y-2">
+        <p class="text-xs muted">Ruangan</p>
         <p class="text-lg font-semibold text-slate-900">
             {{ Auth::user()->room_id ? Auth::user()->room->name : 'Tidak ada' }}
         </p>
-        <p class="text-[11px] text-slate-500 mt-1">{{ Auth::user()->room_id ? 'Bisa approve booking' : 'Hanya mengajukan booking' }}</p>
+        <p class="text-[11px] muted">{{ Auth::user()->room_id ? 'Dapat approve/menolak booking' : 'Hanya mengajukan booking' }}</p>
     </div>
-    <div class="p-4 bg-white border rounded-lg">
-        <p class="text-xs text-slate-500">Akses cepat</p>
-        <div class="flex gap-2 mt-2">
-            <a href="{{ route('guru.bookings.index') }}" class="px-3 py-1.5 rounded-md border text-xs text-slate-700 hover:bg-slate-50">Booking</a>
+    <div class="card card-padding space-y-3">
+        <p class="text-xs muted">Akses cepat</p>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('guru.bookings.index') }}" class="btn-ghost">Booking Saya</a>
             @if(Auth::user()->room_id)
-            <a href="{{ route('guru.bookings.requests') }}" class="px-3 py-1.5 rounded-md border text-xs text-slate-700 hover:bg-slate-50">Approve</a>
+            <a href="{{ route('guru.bookings.history') }}" class="btn-ghost">History</a>
             @endif
         </div>
     </div>
 </div>
 
 @if(Auth::user()->room_id)
-    <div class="bg-white border rounded-lg p-4 mb-6">
-        <div class="flex items-center justify-between">
+    <div class="card card-padding mb-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div>
-                <p class="text-xs text-slate-500">Penanggung jawab</p>
+                <p class="text-xs muted">Penanggung jawab</p>
                 <h2 class="text-lg font-semibold text-slate-900">{{ Auth::user()->room->name }}</h2>
+                <p class="text-sm muted">Fasilitas: {{ Auth::user()->room->facilities->count() ?? 0 }}</p>
             </div>
-            <a href="{{ route('guru.bookings.requests') }}" class="text-xs px-3 py-2 rounded-md border text-slate-700 hover:bg-slate-50">Kelola request</a>
+            <div class="flex gap-2">
+                <a href="{{ route('guru.bookings.requests') }}" class="btn-dark">Kelola Request</a>
+                <a href="{{ route('guru.facilities.index') }}" class="btn-ghost">Fasilitas</a>
+            </div>
         </div>
     </div>
 @endif
 
 <div class="grid gap-3 md:grid-cols-3">
-    <a href="{{ route('guru.bookings.index') }}" class="p-4 bg-white border rounded-lg hover:bg-slate-50">
+    <a href="{{ route('guru.bookings.index') }}" class="card card-padding hover:shadow-lg transition">
         <p class="font-semibold text-slate-900">Booking Saya</p>
-        <p class="text-xs text-slate-500">Lihat riwayat peminjaman</p>
+        <p class="text-sm muted">Lihat riwayat peminjaman</p>
     </a>
-    <a href="{{ route('guru.bookings.create') }}" class="p-4 bg-white border rounded-lg hover:bg-slate-50">
+    <a href="{{ route('guru.bookings.create') }}" class="card card-padding hover:shadow-lg transition">
         <p class="font-semibold text-slate-900">Buat Booking</p>
-        <p class="text-xs text-slate-500">Ajukan pemakaian fasilitas</p>
+        <p class="text-sm muted">Ajukan pemakaian fasilitas</p>
     </a>
     @if(Auth::user()->room_id)
-    <a href="{{ route('guru.bookings.requests') }}" class="p-4 bg-white border rounded-lg hover:bg-slate-50">
+    <a href="{{ route('guru.bookings.requests') }}" class="card card-padding hover:shadow-lg transition">
         <p class="font-semibold text-slate-900">Request Masuk</p>
-        <p class="text-xs text-slate-500">Setujui atau tolak booking</p>
+        <p class="text-sm muted">Setujui atau tolak booking</p>
     </a>
-    <a href="{{ route('guru.facilities.index') }}" class="p-4 bg-white border rounded-lg hover:bg-slate-50">
+    <a href="{{ route('guru.facilities.index') }}" class="card card-padding hover:shadow-lg transition">
         <p class="font-semibold text-slate-900">Fasilitas Ruangan</p>
-        <p class="text-xs text-slate-500">Kelola inventaris ruang Anda</p>
+        <p class="text-sm muted">Kelola inventaris ruang Anda</p>
     </a>
     @endif
 </div>

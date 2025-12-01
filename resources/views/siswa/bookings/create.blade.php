@@ -2,26 +2,26 @@
 @section('page_title','Buat Booking')
 
 @section('content')
-<div class="max-w-5xl mx-auto space-y-6">
+<div class="space-y-6">
 
     {{-- HEADER --}}
-    <div class="flex items-center justify-between">
+    <div class="card card-padding flex items-center justify-between">
         <div>
             <h2 class="text-xl font-semibold text-slate-900">Buat Booking Fasilitas</h2>
-            <p class="text-xs text-slate-500">Pilih fasilitas → isi jadwal → kirim booking.</p>
+            <p class="text-sm muted">Pilih fasilitas → isi jadwal → kirim booking.</p>
         </div>
 
         <a href="{{ route('siswa.bookings.index') }}" 
-           class="text-xs text-slate-600 hover:text-slate-900 transition">Kembali</a>
+           class="btn-ghost">Kembali</a>
     </div>
 
 
 
     {{-- FILTER CARD --}}
-    <div class="rounded-lg border bg-white p-5 space-y-4">
+    <div class="card card-padding space-y-4">
 
         @if ($errors->any())
-        <div class="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+        <div class="card card-padding border-red-300 bg-red-50/80 p-3 text-sm text-red-700">
             <p class="font-semibold mb-1">Terjadi kesalahan:</p>
             <ul class="list-disc pl-5 space-y-1">
                 @foreach ($errors->all() as $error) <li>{{ $error }}</li> @endforeach
@@ -52,7 +52,7 @@
 
             <div class="flex items-end gap-2">
                 <button class="btn-dark w-full md:w-auto">Filter</button>
-                <a href="{{ route('siswa.bookings.create') }}" class="btn-light">Reset</a>
+                <a href="{{ route('siswa.bookings.create') }}" class="btn-ghost">Reset</a>
             </div>
         </form>
 
@@ -81,99 +81,77 @@
 
                     <div class="flex flex-wrap gap-2 text-[11px] text-slate-600">
                         <span>Kapasitas: {{ $f->capacity ?? '-' }}</span>
-                        <span>
-                            {{ $f->availability_label === 'capacity' ? 'Kapasitas tersedia sekarang' : 'Unit tersedia sekarang' }}:
-                            {{ $f->available_stock_now }} / {{ $f->availability_limit }}
-                        </span>
+                        <span>{{ $f->availability_label === 'capacity' ? 'Kapasitas tersedia sekarang' : 'Unit tersedia sekarang' }}: {{ $f->available_stock_now }} / {{ $f->availability_limit }}</span>
                     </div>
 
-                    <p class="text-[11px] text-slate-600 line-clamp-3">
-                        {{ Str::limit($f->description, 85) }}
-                    </p>
+                    <p class="text-[11px] text-slate-600">{{ \Illuminate\Support\Str::limit($f->description, 80) }}</p>
 
                     <button type="button"
-                        class="btn-dark-small w-full mt-2 select-facility"
+                        class="btn-dark w-full text-xs flex items-center justify-center select-facility"
                         data-id="{{ $f->id }}" data-name="{{ $f->name }}">
-                        Pilih Fasilitas
+                        Pilih
                     </button>
                 </div>
-
             </div>
             @empty
-                <p class="text-sm text-slate-500 col-span-full text-center py-4">Tidak ada fasilitas ditemukan.</p>
+                <p class="text-sm text-slate-500">Fasilitas tidak ditemukan.</p>
             @endforelse
 
         </div>
 
 
-
         {{-- FORM BOOKING --}}
-        <form action="{{ route('siswa.bookings.store') }}" method="POST" class="space-y-5" id="bookingForm">
+        <form action="{{ route('siswa.bookings.store') }}" method="POST" class="space-y-4" id="bookingForm">
             @csrf
-
             <input type="hidden" name="facility_id" id="facilityInput" value="{{ old('facility_id') }}">
 
-            <div class="form-box">
-                <p class="font-semibold text-[13px] text-slate-800">Fasilitas dipilih:</p>
-                <p id="selectedFacility" class="text-[13px] text-slate-600">
-                    {{ old('facility_id') ? 'ID: '.old('facility_id') : 'Belum dipilih' }}
-                </p>
+            <div class="card card-padding bg-slate-50 text-sm">
+                <p class="font-semibold text-slate-800">Fasilitas terpilih:</p>
+                <p id="selectedFacility" class="text-slate-600">{{ old('facility_id') ? 'ID: '.old('facility_id') : 'Belum dipilih' }}</p>
             </div>
 
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm text-slate-700 mb-1">Mulai</label>
+                    <label class="text-slate-700 text-[13px]">Mulai</label>
                     <input type="datetime-local" name="start_time" value="{{ old('start_time') }}" class="input-base" required>
                 </div>
                 <div>
-                    <label class="block text-sm text-slate-700 mb-1">Selesai</label>
+                    <label class="text-slate-700 text-[13px]">Selesai</label>
                     <input type="datetime-local" name="end_time" value="{{ old('end_time') }}" class="input-base" required>
                 </div>
             </div>
 
-            <div>
-                <label class="block text-sm text-slate-700 mb-1">Unit yang dibutuhkan</label>
-                <input type="number" min="1" name="capacity_used" value="{{ old('capacity_used',1) }}" class="input-base" required>
-                <p class="text-[11px] text-slate-500 mt-1">Tidak boleh melebihi unit tersedia pada fasilitas.</p>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-slate-700 text-[13px]">Unit yang dibutuhkan</label>
+                    <input type="number" min="1" name="capacity_used" value="{{ old('capacity_used', 1) }}" class="input-base" required>
+                    <p class="text-[11px] text-slate-500 mt-1">Tidak boleh melebihi unit tersedia pada fasilitas.</p>
+                </div>
             </div>
 
             <div>
-                <label class="block text-sm text-slate-700 mb-1">Keperluan</label>
+                <label class="text-slate-700 text-[13px]">Keperluan</label>
                 <textarea name="reason" rows="3" class="input-base" placeholder="Contoh: rapat, presentasi">{{ old('reason') }}</textarea>
             </div>
 
-            <div class="flex gap-3 pt-1">
-                <button class="btn-dark">Kirim Booking</button>
-                <a href="{{ route('siswa.bookings.index') }}" class="btn-light">Batal</a>
+            <div class="pt-2 flex gap-2 flex-wrap">
+                <button class="btn-dark w-full md:w-auto" id="submitBooking">Kirim Booking</button>
+                <a href="{{ route('siswa.bookings.index') }}" class="btn-ghost">Batal</a>
             </div>
-
         </form>
 
     </div>
+
 </div>
 
-
-{{-- JS --}}
 <script>
-document.querySelectorAll('.select-facility').forEach(btn=>{
-    btn.onclick=()=>{
-        facilityInput.value = btn.dataset.id
-        selectedFacility.textContent = btn.dataset.name
-    }
-})
+document.querySelectorAll('.select-facility').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const name = btn.dataset.name;
+        document.getElementById('facilityInput').value = id;
+        document.getElementById('selectedFacility').textContent = name;
+    });
+});
 </script>
-
-
-{{-- STYLE --}}
-<style>
-    .input-base{ @apply w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-slate-200; }
-    .btn-dark{ @apply px-4 py-2 bg-slate-900 text-white text-sm rounded-md hover:bg-slate-800 transition; }
-    .btn-light{ @apply text-xs px-3 py-2 rounded-md border text-slate-700 hover:bg-slate-50 transition; }
-    .btn-dark-small{ @apply text-xs px-3 py-2 bg-slate-900 text-white rounded-md hover:bg-slate-800 transition; }
-
-    .facility-card{ @apply border rounded-lg overflow-hidden bg-white hover:shadow-md transition; }
-    .tag{ @apply px-2 py-1 text-[11px] border rounded text-slate-700 bg-slate-50 inline-block; }
-
-    .form-box{ @apply p-3 border rounded bg-slate-50 text-sm; }
-</style>
 @endsection

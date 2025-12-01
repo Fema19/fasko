@@ -4,11 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Facility;
-use App\Models\Category;
+use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class BookingController extends Controller
 {
@@ -31,11 +29,19 @@ class BookingController extends Controller
             ->latest()
             ->get();
 
+        $messages = Message::where('receiver_id', $user->id)
+            ->latest()
+            ->get();
+
+        Message::where('receiver_id', $user->id)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
         $view = $user->role === 'guru'
             ? 'guru.bookings.index'
             : 'siswa.bookings.index';
 
-        return view($view, compact('bookings'));
+        return view($view, compact('bookings','messages'));
     }
 
 
@@ -124,118 +130,6 @@ class BookingController extends Controller
 
 
     /* ============================================================
-       5. HALAMAN REQUEST ADMIN & GURU PJ RUANGAN
-    ============================================================*/
-    public function requests(Request $request)
-    {
-        $user = Auth::user();
-
-        // Auto-cancel approved bookings that missed the 5-minute check-in window
-        $this->cancelLateCheckins();
-
-        $query = Booking::with(['user','facility'])
-            ->where('status','pending');
-
-        $checklist = Booking::with(['user','facility'])
-            ->whereIn('status',['approved','active'])
-            ->latest();
-
-        // Guru hanya melihat request fasilitas dari ruangan yang ia tangani
-        if ($user->role === 'guru') {
-            if (! $user->room_id) {
-                abort(403,'Anda tidak terdaftar sebagai penanggung jawab ruangan');
-            }
-
-            $query->whereHas('facility', function($q) use ($user){
-                $q->where('room_id', $user->room_id);
-            });
-
-            $checklist->whereHas('facility', function($q) use ($user){
-                $q->where('room_id', $user->room_id);
-            });
-
-            return view('guru.bookings.requests', [
-                'bookings'=>$query->get(),
-                'checklist'=>$checklist->get(),
-            ]);
-        }
-
-        // Admin melihat semua
-        return view('admin.bookings.requests',[
-            'bookings'=>$query->get(),
-            'checklist'=>$checklist->get(),
-        ]);
-    }
-
-
-    /* ============================================================
-       6. APPROVE (HANYA ADMIN & GURU PJ RUANGAN)
-    ============================================================*/
-    public function approve(Booking $booking)
-    {
-        if (Auth::user()->role === 'guru') {
-            if (Auth::user()->room_id !== $booking->facility->room_id) {
-                abort(403,"Anda bukan penanggung jawab ruangan ini");
-            }
-        }
-
-        // Cek dulu stok logis pada rentang waktu booking ini
-        $remaining = $this->remainingStock($booking->facility, $booking, $booking->id);
-        if ($remaining < $booking->capacity_used) {
-            return back()->with('error', 'Stok fasilitas habis pada rentang waktu tersebut');
-        }
-
-        try {
-            DB::transaction(function () use ($booking) {
-                $facility = Facility::lockForUpdate()->find($booking->facility_id);
-
-                // Validasi ulang di dalam transaction untuk menghindari race condition
-                $remainingLocked = $this->remainingStock($facility, $booking, $booking->id);
-                if ($remainingLocked < $booking->capacity_used) {
-                    throw new \RuntimeException('Stok fasilitas habis pada rentang waktu tersebut');
-                }
-
-                // Setujui booking
-                $booking->update([
-                    'status' => 'approved',
-                    'approved_by' => Auth::id()
-                ]);
-
-                // Jika setelah disetujui stok habis, batalkan semua booking lain yang bentrok
-                $remainingAfter = $this->remainingStock($facility, $booking);
-                if ($remainingAfter <= 0) {
-                    $this->cancelPendingConflicts($facility, $booking);
-                }
-            });
-        } catch (\RuntimeException $e) {
-            return back()->with('error', $e->getMessage());
-        }
-
-        return back()->with('success','Booking disetujui');
-    }
-
-
-    /* ============================================================
-       7. REJECT (HANYA ADMIN & GURU PJ RUANGAN)
-    ============================================================*/
-    public function reject(Booking $booking)
-    {
-        if (Auth::user()->role === 'guru') {
-            if (Auth::user()->room_id !== $booking->facility->room_id) {
-                abort(403,"Anda bukan penanggung jawab ruangan ini");
-            }
-        }
-
-        $booking->update([
-            'status'=>'rejected',
-            'approved_by'=>Auth::id()
-        ]);
-
-        return back()->with('error','Booking ditolak');
-    }
-
-
-    /* ============================================================
        8. CHECKIN (Pemilik booking: siswa/guru tanpa room)
     ============================================================*/
     public function checkIn(Booking $booking)
@@ -278,145 +172,6 @@ class BookingController extends Controller
 
 
     /* ============================================================
-       9. COMPLETE / SELESAI
-    ============================================================*/
-    public function complete(Booking $booking)
-    {
-        if (Auth::user()->role === 'guru' && Auth::user()->room_id !== $booking->facility->room_id) {
-            abort(403,'Tidak memiliki akses menyelesaikan booking ini');
-        }
-
-        $now = now();
-        $end = $booking->end_time;
-
-        if ($now->lt($end)) {
-            return back()->with('error','Check-out hanya dapat dilakukan setelah jadwal selesai.');
-        }
-
-        $booking->update([
-            'status'=>'completed',
-            'checked_out'=>true,
-            'check_out_time'=>now()
-        ]);
-
-        if ($now->gt($end->copy()->addMinutes(15))) {
-            return back()->with('error','Terlambat check-out lebih dari 15 menit. Sanksi dapat dikenakan.');
-        }
-
-        return back()->with('success','Booking selesai dan check-out berhasil');
-    }
-
-
-    /* ============================================================
-       10. HISTORY ADMIN (FULL DATA)
-    ============================================================*/
-    public function history(Request $request)
-    {
-        $user = Auth::user();
-
-        $filters = [
-            'status' => $request->get('status'),
-            'date'   => $request->get('date'),
-            'q'      => $request->get('q'),
-        ];
-
-        $query = Booking::with(['user','facility.room'])
-            ->whereIn('status', ['approved','active','completed','cancelled','rejected'])
-            ->latest('start_time');
-
-        if ($filters['status']) {
-            $query->where('status', $filters['status']);
-        }
-
-        if ($filters['date']) {
-            $query->whereDate('start_time', $filters['date']);
-        }
-
-        if ($filters['q']) {
-            $query->where(function($q) use ($filters){
-                $q->whereHas('user', function($u) use ($filters){
-                    $u->where('name','like','%'.$filters['q'].'%');
-                })->orWhereHas('facility', function($f) use ($filters){
-                    $f->where('name','like','%'.$filters['q'].'%');
-                })->orWhere('reason','like','%'.$filters['q'].'%');
-            });
-        }
-
-        if ($user->role === 'guru') {
-            if (! $user->room_id) {
-                abort(403,'Anda tidak terdaftar sebagai penanggung jawab ruangan');
-            }
-
-            $query->whereHas('facility', function($q) use ($user){
-                $q->where('room_id', $user->room_id);
-            });
-
-            $view = 'guru.bookings.history';
-        } else {
-            $view = 'admin.bookings.history';
-        }
-
-        $bookings = $query->paginate(15)->withQueryString();
-
-        return view($view, compact('bookings','filters'));
-    }
-
-    public function exportHistory(Request $request)
-    {
-        $user = Auth::user();
-
-        $filters = [
-            'status' => $request->get('status'),
-            'date'   => $request->get('date'),
-            'q'      => $request->get('q'),
-        ];
-
-        $query = Booking::with(['user','facility.room'])
-            ->whereIn('status', ['approved','active','completed','cancelled','rejected'])
-            ->latest('start_time');
-
-        if ($filters['status']) {
-            $query->where('status', $filters['status']);
-        }
-
-        if ($filters['date']) {
-            $query->whereDate('start_time', $filters['date']);
-        }
-
-        if ($filters['q']) {
-            $query->where(function($q) use ($filters){
-                $q->whereHas('user', function($u) use ($filters){
-                    $u->where('name','like','%'.$filters['q'].'%');
-                })->orWhereHas('facility', function($f) use ($filters){
-                    $f->where('name','like','%'.$filters['q'].'%');
-                })->orWhere('reason','like','%'.$filters['q'].'%');
-            });
-        }
-
-        if ($user->role === 'guru') {
-            if (! $user->room_id) {
-                abort(403,'Anda tidak terdaftar sebagai penanggung jawab ruangan');
-            }
-
-            $query->whereHas('facility', function($q) use ($user){
-                $q->where('room_id', $user->room_id);
-            });
-        }
-
-        $bookings = $query->get();
-
-        $pdf = Pdf::loadView('bookings.history-pdf', [
-            'bookings' => $bookings,
-            'filters'  => $filters,
-            'user'     => $user,
-        ]);
-
-        $filename = 'history-booking-'.now()->format('Ymd_His').'.pdf';
-
-        return $pdf->download($filename);
-    }
-
-    /* ============================================================
        11. CANCEL (USER/GURU PEMILIK BOOKING)
     ============================================================*/
     public function destroy(Booking $booking)
@@ -434,93 +189,6 @@ class BookingController extends Controller
         $route = $user->role === 'guru' ? 'guru.bookings.index' : 'siswa.bookings.index';
 
         return redirect()->route($route)->with('success','Booking dibatalkan');
-    }
-
-    /**
-     * Hitung stok tersisa pada rentang waktu booking tertentu.
-     */
-    private function remainingStock(Facility $facility, Booking $booking, $excludeBookingId = null): int
-    {
-        $maxStock = $facility->max_availability;
-
-        $used = Booking::where('facility_id', $facility->id)
-            ->whereIn('status', ['approved','active'])
-            ->when($excludeBookingId, fn($q) => $q->where('id','!=',$excludeBookingId))
-            ->where(function($q) use ($booking){
-                $q->whereBetween('start_time', [$booking->start_time, $booking->end_time])
-                  ->orWhereBetween('end_time', [$booking->start_time, $booking->end_time])
-                  ->orWhere(function($q) use ($booking){
-                      $q->where('start_time','<=',$booking->start_time)
-                        ->where('end_time','>=',$booking->end_time);
-                  });
-            })
-            ->sum('capacity_used');
-
-        return $maxStock - $used;
-    }
-
-    /**
-     * Batalkan booking pending lain yang bentrok di waktu yang sama ketika stok habis.
-     */
-    private function cancelPendingConflicts(Facility $facility, Booking $approvedBooking): void
-    {
-        Booking::where('facility_id', $facility->id)
-            ->where('status', 'pending')
-            ->where('id','!=',$approvedBooking->id)
-            ->where(function($q) use ($approvedBooking){
-                $q->whereBetween('start_time', [$approvedBooking->start_time, $approvedBooking->end_time])
-                  ->orWhereBetween('end_time', [$approvedBooking->start_time, $approvedBooking->end_time])
-                  ->orWhere(function($q) use ($approvedBooking){
-                      $q->where('start_time','<=',$approvedBooking->start_time)
-                        ->where('end_time','>=',$approvedBooking->end_time);
-                  });
-            })
-            ->update(['status' => 'cancelled']);
-    }
-
-    /**
-     * Batalkan otomatis booking approved yang tidak check-in dalam 5 menit (window 30-25 menit sebelum start).
-     */
-    private function cancelLateCheckins(): void
-    {
-        $now = now();
-        Booking::where('status','approved')
-            ->where('checked_in', false)
-            ->get()
-            ->each(function($booking) use ($now) {
-                $windowStart = $booking->start_time->copy()->subMinutes(30)->startOfMinute();
-                $windowEnd = $windowStart->copy()->addMinutes(5)->subSecond();
-                if ($now->gt($windowEnd)) {
-                    $booking->update(['status' => 'cancelled']);
-                }
-            });
-    }
-
-    /* ============================================================
-       12. RESET HISTORY (ADMIN / GURU PJ)
-    ============================================================*/
-    public function resetHistory()
-    {
-        $user = Auth::user();
-
-        // Hapus riwayat non-pending yang sudah lewat (end_time <= now)
-        $query = Booking::where('status','!=','pending')
-            ->whereNotNull('end_time')
-            ->where('end_time','<=', now());
-
-        if ($user->role === 'guru') {
-            if (! $user->room_id) abort(403,'Anda tidak terdaftar sebagai penanggung jawab ruangan');
-
-            $query->whereHas('facility', function($q) use ($user){
-                $q->where('room_id', $user->room_id);
-            });
-        } elseif ($user->role !== 'admin') {
-            abort(403,'Tidak boleh reset history');
-        }
-
-        $deleted = $query->delete();
-
-        return back()->with('success', "History dibersihkan ($deleted entri)");
     }
 
     /**

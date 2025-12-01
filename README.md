@@ -16,9 +16,11 @@ Web app manajemen peminjaman fasilitas sekolah dengan alur approval, check-in/ou
 - Monitoring: dashboard ringkas, pencarian/filter dasar.
 
 ### Diagram
-- ERD (Mermaid): `diagrams/erd.mmd`
-- UML alur booking/check-in/out & auto reset: `diagrams/uml.mmd`
-- Tambahkan gambar atau render mermaid sesuai kebutuhan (contoh: plugin VSCode atau GitHub mermaid).
+- ERD (Gambar):  
+  ![ERD](diagrams/erd%20diagram.png)
+- UML alur booking/check-in/out & auto reset:  
+  ![UML](diagrams/UML.svg)
+- Sumber Mermaid tetap tersedia: `diagrams/erd.mmd` dan `diagrams/uml.mmd`.
 
 ### Teknologi
 - Backend: Laravel 12, PHP 8.2+, Eloquent ORM.
@@ -42,6 +44,8 @@ cp .env.example .env
 php artisan key:generate
 php artisan migrate --seed
 php artisan storage:link
+php artisan schedule:run
+composer require barryvdh/laravel-dompdf
 npm run dev   # atau npm run build untuk produksi
 php artisan serve
 ```

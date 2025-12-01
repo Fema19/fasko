@@ -22,6 +22,11 @@
     {{ session('error') }}
 </div>
 @endif
+@if($errors->any())
+<div class="bg-red-50 border-l-4 border-red-600 text-red-900 px-4 py-3 mb-3 text-sm rounded">
+    {{ $errors->first() }}
+</div>
+@endif
 
 <div class="bg-white border rounded-xl overflow-hidden">
     <table class="w-full text-sm">
@@ -51,9 +56,10 @@
                             ACC
                         </button>
                     </form>
-                    <form action="{{ route('admin.bookings.reject', $b) }}" method="POST">
+                    <form action="{{ route('admin.bookings.reject', $b) }}" method="POST" class="flex items-center gap-2">
                         @csrf
                         @method('PUT')
+                        <input type="text" name="message" required placeholder="Alasan penolakan" class="w-40 px-2 py-1 border rounded text-xs focus:ring-2 focus:ring-red-200 focus:border-red-400">
                         <button class="px-3 py-1.5 rounded text-xs border text-gray-700 hover:bg-gray-50">
                             Tolak
                         </button>
