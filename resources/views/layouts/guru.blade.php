@@ -45,7 +45,7 @@
     <header class="bg-white/80 backdrop-blur border-b">
         <div class="page-shell flex items-center justify-between gap-4 py-4">
             <div class="flex items-center gap-2">
-                <div class="h-10 w-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-semibold text-sm shadow-sm">G</div>
+                <div class="h-10 w-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-semibold text-sm shadow-sm">GURU</div>
                 <div>
                     <p class="text-sm font-semibold text-slate-900">Panel Guru</p>
                     <p class="text-xs text-slate-500">Booking & fasilitas</p>
